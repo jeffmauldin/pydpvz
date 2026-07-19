@@ -1,5 +1,5 @@
 {
-    "name": "DevEnviron Gemini",
+    "name": "DevEnviron Antigravity",
     "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
     "features": {
         // Installs a modern Node.js version (latest LTS or specific)
@@ -7,5 +7,5 @@
             "version": "lts"
         }
     },
-    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y vim curl && npm install -g @google/gemini-cli",
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y vim curl && curl -fsSL https://antigravity.google/cli/install.sh | bash",
 }

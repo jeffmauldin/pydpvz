@@ -7,5 +7,5 @@
             "version": "lts"
         }
     },
-    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y vim curl && curl -fsSL https://pi.dev/install.sh | sh && pi install npm:pi-ollama-cloud && pi install npm:pi-web-access && pi install npm:pi-footer",
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y vim curl &&  pip install ddgs && curl -fsSL https://pi.dev/install.sh | sh && pi install npm:pi-ollama-cloud && pi install npm:pi-search-hub && pi install npm:pi-footer",
 }
