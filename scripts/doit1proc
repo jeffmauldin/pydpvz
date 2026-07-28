@@ -1,0 +1,4 @@
+
+../paraview_v610/bin/pvbatch --mesa dpvtkscreenshot.py ../output_can_ex.dpvtk my_screenshot_5.png --viewdirection [0,1,0]
+
+

@@ -1,0 +1,4 @@
+
+mpiexec.mpich -np 1 ../paraview_v610/bin/pvbatch --sym --mesa dpvtkscreenshot.py ../output_can_ex.dpvtk my_screenshot_6.png --viewdirection [0,1,0]
+
+

@@ -7,5 +7,5 @@
             "version": "lts"
         }
     },
-    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y vim curl",
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y vim curl ffmpeg",
 }

@@ -1,0 +1,4 @@
+
+mpiexec.mpich -np 4 ../paraview_v610/bin/pvbatch --sym --mesa dpvtkvideo.py ../output_can_vtpc.dpvtk canvideo1.mp4 --viewdirection [0,1,0]
+
+
