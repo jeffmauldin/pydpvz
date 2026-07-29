@@ -1,0 +1,418 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pydpvz API Reference &mdash; pydpvz 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utility Scripts" href="utilities.html" />
+    <link rel="prev" title="pydpvz documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pydpvz
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pydpvz API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-pydpvz">Core C++ Bindings (<code class="docutils literal notranslate"><span class="pre">pydpvz</span></code>)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.DPvzFile"><code class="docutils literal notranslate"><span class="pre">DPvzFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.active_entries"><code class="docutils literal notranslate"><span class="pre">DPvzFile.active_entries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.failed"><code class="docutils literal notranslate"><span class="pre">DPvzFile.failed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.file_name"><code class="docutils literal notranslate"><span class="pre">DPvzFile.file_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.get_data"><code class="docutils literal notranslate"><span class="pre">DPvzFile.get_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.get_global_size"><code class="docutils literal notranslate"><span class="pre">DPvzFile.get_global_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.get_map"><code class="docutils literal notranslate"><span class="pre">DPvzFile.get_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.get_page_size"><code class="docutils literal notranslate"><span class="pre">DPvzFile.get_page_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.get_step_rank"><code class="docutils literal notranslate"><span class="pre">DPvzFile.get_step_rank()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.get_step_toc"><code class="docutils literal notranslate"><span class="pre">DPvzFile.get_step_toc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.get_steps"><code class="docutils literal notranslate"><span class="pre">DPvzFile.get_steps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.truncate"><code class="docutils literal notranslate"><span class="pre">DPvzFile.truncate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.truncate_time"><code class="docutils literal notranslate"><span class="pre">DPvzFile.truncate_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzFile.write"><code class="docutils literal notranslate"><span class="pre">DPvzFile.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.DPvzMode"><code class="docutils literal notranslate"><span class="pre">DPvzMode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzMode.DPvzCreate"><code class="docutils literal notranslate"><span class="pre">DPvzMode.DPvzCreate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzMode.DPvzReadOnly"><code class="docutils literal notranslate"><span class="pre">DPvzMode.DPvzReadOnly</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzMode.DPvzReadWrite"><code class="docutils literal notranslate"><span class="pre">DPvzMode.DPvzReadWrite</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzMode.DPvzReplace"><code class="docutils literal notranslate"><span class="pre">DPvzMode.DPvzReplace</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzMode.value"><code class="docutils literal notranslate"><span class="pre">DPvzMode.value</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.DPvzRankToc"><code class="docutils literal notranslate"><span class="pre">DPvzRankToc</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzRankToc.deflated_crc"><code class="docutils literal notranslate"><span class="pre">DPvzRankToc.deflated_crc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzRankToc.deflated_size"><code class="docutils literal notranslate"><span class="pre">DPvzRankToc.deflated_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzRankToc.inflated_size"><code class="docutils literal notranslate"><span class="pre">DPvzRankToc.inflated_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzRankToc.offset"><code class="docutils literal notranslate"><span class="pre">DPvzRankToc.offset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.DPvzTocEntry"><code class="docutils literal notranslate"><span class="pre">DPvzTocEntry</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzTocEntry.cycle"><code class="docutils literal notranslate"><span class="pre">DPvzTocEntry.cycle</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzTocEntry.offset"><code class="docutils literal notranslate"><span class="pre">DPvzTocEntry.offset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzTocEntry.ranks"><code class="docutils literal notranslate"><span class="pre">DPvzTocEntry.ranks</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzTocEntry.time"><code class="docutils literal notranslate"><span class="pre">DPvzTocEntry.time</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.DPvzVtk"><code class="docutils literal notranslate"><span class="pre">DPvzVtk</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzVtk.extract"><code class="docutils literal notranslate"><span class="pre">DPvzVtk.extract()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzVtk.list"><code class="docutils literal notranslate"><span class="pre">DPvzVtk.list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pydpvz.DPvzVtk.show"><code class="docutils literal notranslate"><span class="pre">DPvzVtk.show()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pydpvz.vtk_serializer">VTK Serializer (<code class="docutils literal notranslate"><span class="pre">pydpvz.vtk_serializer</span></code>)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.convert_pdc_to_multiblock"><code class="docutils literal notranslate"><span class="pre">convert_pdc_to_multiblock()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.convert_to_unstructured_grid"><code class="docutils literal notranslate"><span class="pre">convert_to_unstructured_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.serialize_multiblock_dataset"><code class="docutils literal notranslate"><span class="pre">serialize_multiblock_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.serialize_partitioned_dataset_collection"><code class="docutils literal notranslate"><span class="pre">serialize_partitioned_dataset_collection()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="packaging.html">Packaging and Installation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pydpvz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pydpvz API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pydpvz-api-reference">
+<h1>pydpvz API Reference<a class="headerlink" href="#pydpvz-api-reference" title="Link to this heading"></a></h1>
+<p>This page provides the API reference for the core <code class="docutils literal notranslate"><span class="pre">pydpvz</span></code> C++ extensions and the <code class="docutils literal notranslate"><span class="pre">vtk_serializer</span></code> Python module.</p>
+<section id="module-pydpvz">
+<span id="core-c-bindings-pydpvz"></span><h2>Core C++ Bindings (<code class="docutils literal notranslate"><span class="pre">pydpvz</span></code>)<a class="headerlink" href="#module-pydpvz" title="Link to this heading"></a></h2>
+<p>pydpvz: Python bindings for Sandia National Laboratories DPvz parallel I/O library.</p>
+<p>mpi4py is imported first to ensure MPI_Init() is called before the dpvz C++
+shared library makes any MPI calls (e.g. MPI_Comm_rank) during module load.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pydpvz.</span></span><span class="sig-name descname"><span class="pre">DPvzFile</span></span><a class="headerlink" href="#pydpvz.DPvzFile" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.active_entries">
+<span class="sig-name descname"><span class="pre">active_entries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.active_entries" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.failed">
+<span class="sig-name descname"><span class="pre">failed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.failed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.file_name">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">file_name</span></span><a class="headerlink" href="#pydpvz.DPvzFile.file_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzRankToc" title="pydpvz._pydpvz.DPvzRankToc"><span class="pre">pydpvz._pydpvz.DPvzRankToc</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.get_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.get_global_size">
+<span class="sig-name descname"><span class="pre">get_global_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.get_global_size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.get_map">
+<span class="sig-name descname"><span class="pre">get_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#pydpvz.DPvzTocEntry" title="pydpvz._pydpvz.DPvzTocEntry"><span class="pre">pydpvz._pydpvz.DPvzTocEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.get_map" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.get_page_size">
+<span class="sig-name descname"><span class="pre">get_page_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.get_page_size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.get_step_rank">
+<span class="sig-name descname"><span class="pre">get_step_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzTocEntry" title="pydpvz._pydpvz.DPvzTocEntry"><span class="pre">pydpvz._pydpvz.DPvzTocEntry</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pydpvz.DPvzRankToc" title="pydpvz._pydpvz.DPvzRankToc"><span class="pre">pydpvz._pydpvz.DPvzRankToc</span></a></span></span><a class="headerlink" href="#pydpvz.DPvzFile.get_step_rank" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.get_step_toc">
+<span class="sig-name descname"><span class="pre">get_step_toc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzTocEntry" title="pydpvz._pydpvz.DPvzTocEntry"><span class="pre">pydpvz._pydpvz.DPvzTocEntry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#pydpvz.DPvzRankToc" title="pydpvz._pydpvz.DPvzRankToc"><span class="pre">pydpvz._pydpvz.DPvzRankToc</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.get_step_toc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.get_steps">
+<span class="sig-name descname"><span class="pre">get_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.get_steps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.truncate">
+<span class="sig-name descname"><span class="pre">truncate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.truncate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.truncate_time">
+<span class="sig-name descname"><span class="pre">truncate_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsFloat</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.truncate_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzFile.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><span class="pre">pydpvz._pydpvz.DPvzFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsFloat</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#pydpvz.DPvzFile.write" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pydpvz.DPvzMode">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pydpvz.</span></span><span class="sig-name descname"><span class="pre">DPvzMode</span></span><a class="headerlink" href="#pydpvz.DPvzMode" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Members:</p>
+<p>DPvzReadOnly</p>
+<p>DPvzReadWrite</p>
+<p>DPvzCreate</p>
+<p>DPvzReplace</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pydpvz.DPvzMode.DPvzCreate">
+<span class="sig-name descname"><span class="pre">DPvzCreate</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;DPvzMode.DPvzCreate:</span> <span class="pre">4&gt;</span></span><a class="headerlink" href="#pydpvz.DPvzMode.DPvzCreate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pydpvz.DPvzMode.DPvzReadOnly">
+<span class="sig-name descname"><span class="pre">DPvzReadOnly</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;DPvzMode.DPvzReadOnly:</span> <span class="pre">1&gt;</span></span><a class="headerlink" href="#pydpvz.DPvzMode.DPvzReadOnly" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pydpvz.DPvzMode.DPvzReadWrite">
+<span class="sig-name descname"><span class="pre">DPvzReadWrite</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;DPvzMode.DPvzReadWrite:</span> <span class="pre">2&gt;</span></span><a class="headerlink" href="#pydpvz.DPvzMode.DPvzReadWrite" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pydpvz.DPvzMode.DPvzReplace">
+<span class="sig-name descname"><span class="pre">DPvzReplace</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;DPvzMode.DPvzReplace:</span> <span class="pre">8&gt;</span></span><a class="headerlink" href="#pydpvz.DPvzMode.DPvzReplace" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">DPvzMode.name</span> <span class="pre">-&gt;</span> <span class="pre">str</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzMode.value">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value</span></span><a class="headerlink" href="#pydpvz.DPvzMode.value" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pydpvz.DPvzRankToc">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pydpvz.</span></span><span class="sig-name descname"><span class="pre">DPvzRankToc</span></span><a class="headerlink" href="#pydpvz.DPvzRankToc" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzRankToc.deflated_crc">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">deflated_crc</span></span><a class="headerlink" href="#pydpvz.DPvzRankToc.deflated_crc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzRankToc.deflated_size">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">deflated_size</span></span><a class="headerlink" href="#pydpvz.DPvzRankToc.deflated_size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzRankToc.inflated_size">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">inflated_size</span></span><a class="headerlink" href="#pydpvz.DPvzRankToc.inflated_size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzRankToc.offset">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">offset</span></span><a class="headerlink" href="#pydpvz.DPvzRankToc.offset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pydpvz.DPvzTocEntry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pydpvz.</span></span><span class="sig-name descname"><span class="pre">DPvzTocEntry</span></span><a class="headerlink" href="#pydpvz.DPvzTocEntry" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzTocEntry.cycle">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">cycle</span></span><a class="headerlink" href="#pydpvz.DPvzTocEntry.cycle" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzTocEntry.offset">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">offset</span></span><a class="headerlink" href="#pydpvz.DPvzTocEntry.offset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzTocEntry.ranks">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ranks</span></span><a class="headerlink" href="#pydpvz.DPvzTocEntry.ranks" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pydpvz.DPvzTocEntry.time">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">time</span></span><a class="headerlink" href="#pydpvz.DPvzTocEntry.time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pydpvz.DPvzVtk">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pydpvz.</span></span><span class="sig-name descname"><span class="pre">DPvzVtk</span></span><a class="headerlink" href="#pydpvz.DPvzVtk" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pydpvz.DPvzFile" title="pydpvz._pydpvz.DPvzFile"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPvzFile</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzVtk.extract">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#pydpvz.DPvzVtk.extract" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzVtk.list">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#pydpvz.DPvzVtk.list" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pydpvz.DPvzVtk.show">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#pydpvz.DPvzVtk.show" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pydpvz.vtk_serializer">
+<span id="vtk-serializer-pydpvz-vtk-serializer"></span><h2>VTK Serializer (<code class="docutils literal notranslate"><span class="pre">pydpvz.vtk_serializer</span></code>)<a class="headerlink" href="#module-pydpvz.vtk_serializer" title="Link to this heading"></a></h2>
+<p>VTK Serialization module for converting ParaView/VTK memory objects into string payloads.</p>
+<p>This module provides utilities to traverse distributed ParaView pipelines (which often 
+surface as composite datasets like <cite>vtkPartitionedDataSetCollection</cite> or <cite>vtkMultiBlockDataSet</cite>),
+flatten them into a single <cite>vtkUnstructuredGrid</cite>, and serialize them into memory via 
+<cite>vtkXMLUnstructuredGridWriter</cite>. 
+The serialized strings are wrapped in custom <cite>&lt;FILE NAME=…&gt;</cite> XML tags for aggregation 
+by the <cite>pydpvz</cite> C++ backend.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_serializer.convert_pdc_to_multiblock">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">convert_pdc_to_multiblock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.convert_pdc_to_multiblock" title="Link to this definition"></a></dt>
+<dd><p>Converts a vtkPartitionedDataSetCollection to a vtkMultiBlockDataSet.</p>
+<p>This is often required because many legacy VTK filters or older serialization 
+pathways do not fully support the newer PDC format natively.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_serializer.convert_to_unstructured_grid">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">convert_to_unstructured_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.convert_to_unstructured_grid" title="Link to this definition"></a></dt>
+<dd><p>Flattens a VTK composite dataset (e.g., vtkMultiBlockDataSet) into a single vtkUnstructuredGrid.</p>
+<p>In parallel environments, a rank’s local partition might consist of many small blocks. 
+Appending them into a single grid allows us to write exactly one continuous byte stream 
+per rank to the DPvz archive.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_serializer.serialize_multiblock_dataset">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">serialize_multiblock_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.serialize_multiblock_dataset" title="Link to this definition"></a></dt>
+<dd><p>Serializes a vtkMultiBlockDataSet to an XML string payload.</p>
+<p>The payload is compressed in-memory using ZLib and wrapped in custom <cite>&lt;FILE NAME=…&gt;</cite> tags 
+that the DPvz C++ reader expects when parsing the archive.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mb (vtkMultiBlockDataSet): The dataset to serialize.
+rank (int): The current MPI rank processing the data.
+cycle (int): The current timestep index.
+time (float): The current simulation time.</p>
+</dd>
+<dt>Returns:</dt><dd><p>bytes: The serialized, compressed XML payload.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_serializer.serialize_partitioned_dataset_collection">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">serialize_partitioned_dataset_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.serialize_partitioned_dataset_collection" title="Link to this definition"></a></dt>
+<dd><p>Serializes a vtkPartitionedDataSetCollection to an XML string payload.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>pdc (vtkPartitionedDataSetCollection): The dataset to serialize.
+rank (int): The current MPI rank processing the data.
+cycle (int): The current timestep index.
+time (float): The current simulation time.</p>
+</dd>
+<dt>Returns:</dt><dd><p>bytes: The serialized, compressed XML payload.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="pydpvz documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utilities.html" class="btn btn-neutral float-right" title="Utility Scripts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Jeff Mauldin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
