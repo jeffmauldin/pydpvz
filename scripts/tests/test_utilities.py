@@ -138,3 +138,38 @@ def test_dpvtkvideo(sample_dpvtk):
     if shutil.which("ffmpeg"):
         assert os.path.exists(os.path.join(root_dir, out_mp4))
         os.remove(os.path.join(root_dir, out_mp4))
+
+def test_dpvtkscreenshot_with_config(sample_dpvtk):
+    root_dir = os.path.dirname(sample_dpvtk)
+    out_png = "test_screenshot_config.png"
+    config_file = "sample_render_config.json"
+    
+    cmd = [
+        "mpiexec.mpich", "-np", "4",
+        "./paraview_v610/bin/pvbatch", "--sym", "--mesa",
+        "scripts/dpvtkscreenshot.py",
+        sample_dpvtk, out_png, "--config", config_file
+    ]
+    bash_cmd = f"source scripts/setup_env.sh && {' '.join(cmd)}"
+    subprocess.run(["bash", "-c", bash_cmd], cwd=root_dir, check=True)
+    
+    assert os.path.exists(os.path.join(root_dir, out_png))
+    os.remove(os.path.join(root_dir, out_png))
+
+def test_dpvtkprobe(sample_dpvtk):
+    root_dir = os.path.dirname(sample_dpvtk)
+    
+    cmd = [
+        "mpiexec.mpich", "-np", "4",
+        "./paraview_v610/bin/pvbatch", "--sym", "scripts/dpvtkprobe.py",
+        sample_dpvtk, "--timestep", "0"
+    ]
+    bash_cmd = f"source scripts/setup_env.sh && {' '.join(cmd)}"
+    result = subprocess.run(["bash", "-c", bash_cmd], cwd=root_dir, check=True, capture_output=True, text=True)
+    
+    # Verify expected structure is in the standard output
+    assert "--- DPvz Probe" in result.stdout
+    assert "Point Data Arrays" in result.stdout
+    assert "Cell Data Arrays" in result.stdout
+    assert "Field Data Arrays" in result.stdout
+

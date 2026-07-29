@@ -9,11 +9,11 @@ The primary goal is to enable parallel `pvbatch` jobs to read complex partitione
 
 1. **Partitioned Dataset / Exodus II Target (`.vtpc` / `.ex2`)**:
    ```bash
-   mpiexec -np 4 pvbatch scripts/convertvtpcscript1.py sample_data/can_data/can_data_4_process_exodus/can.ex2.4.0 output_can_exodus.dpvtk
-   mpiexec -np 4 pvbatch scripts/convertvtpcscript1.py sample_data/can_data/can_data_4_process_vtpc/can_vtpc_0.vtpc output_can_vtpc.dpvtk
-   mpiexec -np 4 pvbatch scripts/convertvtpcscript1.py sample_data/hifire_example_data/hifire_volume_0001.vtpc output_hifire.dpvtk
+   mpiexec.mpich -np 4 ./paraview_v610/bin/pvbatch --sym scripts/dpvtkconvert.py --input sample_data/can_data/can_data_4_process_exodus/can.ex2.4.0 --output output_can_exodus.dpvtk
+   mpiexec.mpich -np 4 ./paraview_v610/bin/pvbatch --sym scripts/dpvtkconvert.py --input sample_data/can_data/can_data_4_process_vtpc/can_vtpc_0.vtpc --output output_can_vtpc.dpvtk
+   mpiexec.mpich -np 4 ./paraview_v610/bin/pvbatch --sym scripts/dpvtkconvert.py --input sample_data/hifire_example_data/hifire_volume_0001.vtpc --output output_hifire.dpvtk
    ```
-   Where `convertvtpcscript1.py` executes in parallel across 4 MPI ranks:
+   Where `dpvtkconvert.py` executes in parallel across 4 MPI ranks:
    - `IOSSReader()` reads `.vtpc` / `.ex2` / Exodus dataset partitions in parallel across all 4 MPI processes.
    - `pydpvz.vtk_serializer` serializes local rank partitions in memory into VTK XML string streams.
    - `pydpvz.DPvzVtk` executes a collective MPI write operation (`dpvz.write(cycle, time, buffer)`), writing compressed rank streams directly into a single page-aligned `.dpvtk` archive file.
@@ -60,7 +60,7 @@ The primary goal is to enable parallel `pvbatch` jobs to read complex partitione
 * **Socratic Question**: *How should unit tests for the `pydpvz` library and conversion scripts be structured?*
 * **Analysis**:
   - **`pydpvz` C++ Extension Unit Tests**: Test serial (`DPvzFile`, `DPvzVtk`) and parallel (`mpi4py`) API calls directly via `pytest` to ensure Python wrappers function correctly independent of ParaView.
-  - **Conversion Script Integration Tests**: Test `convertvtpcscript1.py` and `convertvtmscript1.py` by launching `mpiexec -np 4 pvbatch` against the actual `sample_data/` files, then verifying the generated `.dpvtk` archives using `dpvz/utils/dpvtk-ar-ser --list` and `--extract`.
+  - **Conversion Script Integration Tests**: Test `dpvtkconvert.py` by launching `mpiexec.mpich -np 4 pvbatch --sym` against the actual `sample_data/` files, then verifying the generated `.dpvtk` archives using `dpvz/utils/dpvtk-ar-ser --list` and `--extract`.
 * **Decision**: Implement dual test suites in `pydpvz/tests/` (unit tests) and `scripts/tests/` (conversion script integration tests).
 
 ### Decision 3: C++ Binding Technology
@@ -124,7 +124,7 @@ The primary goal is to enable parallel `pvbatch` jobs to read complex partitione
 │       └── test_mpi_io.py          # Unit tests for parallel mpi4py DPvzVtk
 └── scripts/                        # WORKSPACE CONVERSION & INTEGRATION SCRIPTS
     ├── setup_paraview.sh           # ParaView 6.1.0 download and environment setup
-    ├── convertvtpcscript1.py       # Parallel pvbatch script (Exodus / .vtpc -> .dpvtk)
+    ├── dpvtkconvert.py             # Unified parallel pvbatch script (all ParaView formats -> .dpvtk)
     ├── convertvtmscript1.py        # Parallel pvbatch script (.vtm -> .dpvtk)
     └── tests/                      # CONVERSION SCRIPT INTEGRATION TESTS
         ├── test_convert_vtpc.py    # Integration tests running mpiexec pvbatch convertvtpcscript1.py
@@ -414,3 +414,40 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
   - **Workflow A (External MPI)**: Explain how to run `dpvtkmpiinfo.py`, paste the snippet into `spack.yaml` under `packages:`, run `spack repo add ./spack-repo`, and execute `spack install py-dpvz`.
   - **Workflow B (Existing ParaView Env)**: Explain how to run `spack repo add ./spack-repo` inside an existing Spack environment containing ParaView, and then execute `spack install py-dpvz`.
   - **Local Development**: Explain how to swap the `git` URL in `package.py` to the `file://` URL for local iterative testing.
+
+### Phase 23: Create ParaView Python Algorithm Writer Plugin
+- [x] **Task 23.1**: Create `scripts/dpvtk_writer_plugin.py` integrating with `paraview.util.vtkAlgorithm`.
+  - Define a class inheriting from `VTKPythonAlgorithmBase`.
+  - Decorate the class with `@smproxy.writer(name="DPvtkWriter", extensions="dpvtk", file_description="DPvtk Archive", support_reload=False)`.
+  - Decorate the input method with `@smproperty.input(name="Input")` and `@smdomain.datatype(dataTypes=["vtkPartitionedDataSetCollection", "vtkMultiBlockDataSet"])`.
+  - Decorate a method to accept a string for the `FileName` property.
+- [x] **Task 23.2**: Implement the `RequestData` pipeline method in the plugin to handle the MPI write:
+  - Fetch the local `vtkDataObject` from the pipeline.
+  - Determine the current timestep from the pipeline executive (`outInfo.Get(vtkDataObject.DATA_TIME_STEP())`). Keep track of an internal step counter (`self._cycle`) or deduce it.
+  - Instantiate `comm = mpi4py.MPI.COMM_WORLD`.
+  - Serialize the geometry using `pydpvz.vtk_serializer`.
+  - Use `pydpvz.DPvzVtk` to execute the collective MPI write operation. *Note: Ensure the file is created (`DPvzReplace`) on the first timestep of the pipeline execution, and appended (`DPvzReadWrite`) for subsequent timesteps in the loop.*
+- [x] **Task 23.3**: Create an integration test script `scripts/convert_with_plugin.py` to replace legacy scripts:
+  - Load the newly created plugin using `paraview.servermanager.LoadPlugin()`.
+  - Use `glob` and `OpenDataFile(file_list)` to automatically handle `.vtpc` file series.
+  - Invoke `SaveData("output.dpvtk", proxy=reader, WriteAllTimeSteps=1)` to automatically drive the time loop, completely replacing the old manual orchestration.
+- [x] **Task 23.4**: Document execution instructions within `convert_with_plugin.py`:
+  - Explicitly document that the script should be run via `mpiexec -np 4 pvbatch --sym scripts/convert_with_plugin.py` to ensure symmetric MPI orchestration still functions seamlessly.
+
+### Phase 24: Unified Converter Cleanup
+- [x] **Task 24.1**: Rename and Polish `dpvtkconvert.py`.
+  - Rename `scripts/convert_with_plugin.py` to `scripts/dpvtkconvert.py`.
+  - Introduce `argparse` to handle `--input` (allowing glob patterns) and `--output`.
+  - Keep the explicit proxy instantiation (`DPvtkWriter`) and manual time loop, but add user-friendly logging inside the loop (e.g., `[Rank 0] Processing timestep X...`).
+- [x] **Task 24.2**: Remove Legacy Scripts.
+  - Delete `scripts/convertvtpcscript1.py` and `scripts/converttpcsscript1.py`.
+  - Delete any legacy dependencies in those scripts if they are no longer used anywhere else.
+- [x] **Task 24.3**: Update Documentation.
+  - Scan the repository (including `PLAN.md`) for references to the legacy convert scripts and replace them with `dpvtkconvert.py`.
+
+### Phase 25: Codebase Documentation
+- [x] **Task 25.1**: Add comprehensive docstrings to the `scripts/` folder.
+  - Update all ParaView utility scripts (`dpvtkconvert.py`, `dpvtkscreenshot.py`, `dpvtkanimate.py`, `dpvtkextract.py`, etc.) with module-level, class-level, and function-level docstrings.
+  - Ensure docstrings explain the required MPI execution context (e.g., symmetric mode requirements) and VTK pipeline integration.
+- [x] **Task 25.2**: Add comprehensive docstrings to the `pydpvz/` folder.
+  - Update the Python wrapper files (`vtk_serializer.py`, etc.) with detailed docstrings explaining the serialization logic, MPI rank chunking, and PyBind11 C++ integration.

@@ -1,3 +1,16 @@
+"""
+ParaView symmetric MPI utility to apply VTK filters to a .dpvtk archive.
+
+This pipeline script reads a .dpvtk file into a parallel `vtkPartitionedDataSetCollection`,
+applies a specified distributed ParaView filter (e.g., 'Slice', 'Contour'), and then 
+immediately re-serializes the filtered output into a *new* .dpvtk archive via `pydpvz`.
+It essentially performs out-of-core pipeline processing without requiring the massive 
+memory overhead of standard .vtpc I/O.
+
+Execution Context:
+Must be launched with `mpiexec -np N pvbatch --sym dpvtkfilter.py ...`
+"""
+
 import argparse
 import sys
 from mpi4py import MPI
@@ -8,6 +21,14 @@ import pydpvz.vtk_serializer as vtk_serializer
 import vtk
 
 def filter_dpvtk(input_file, output_file, filter_name):
+    """
+    Filters a .dpvtk archive timestep-by-timestep and writes the output to a new archive.
+    
+    Args:
+        input_file (str): The input .dpvtk file.
+        output_file (str): The new filtered .dpvtk output file.
+        filter_name (str): The name of the ParaView filter to apply (e.g., 'slice', 'contour').
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()

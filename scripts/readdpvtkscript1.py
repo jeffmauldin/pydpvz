@@ -1,3 +1,8 @@
+"""
+Legacy test script demonstrating raw deserialization of a .dpvtk archive.
+Used during initial development to verify round-robin rank reading logic.
+"""
+
 import sys
 import paraview.simple as paraview_simple
 from mpi4py import MPI

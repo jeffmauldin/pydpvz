@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""
+Diagnostic utility to dynamically detect the MPI environment linked to a ParaView binary.
+
+In High Performance Computing contexts, attempting to link `pydpvz` or launch `pvbatch`
+with a mismatched MPI ABI (e.g., OpenMPI vs MPICH) will cause silent deadlocks or segfaults.
+This script uses `ldd` to inspect the embedded `libvtkParallelMPI` and outputs a 
+Spack `packages.yaml` snippet to force a matching external MPI dependency during build.
+"""
+
 import argparse
 import subprocess
 import sys
@@ -6,6 +15,12 @@ import os
 import glob
 
 def get_mpi_info(pvbatch_path):
+    """
+    Inspects an executable to detect its dynamically linked MPI flavor.
+    
+    Args:
+        pvbatch_path (str): Absolute path to the `pvbatch` executable.
+    """
     if not os.path.exists(pvbatch_path):
         print(f"Error: Executable not found at {pvbatch_path}")
         sys.exit(1)

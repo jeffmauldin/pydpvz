@@ -1,9 +1,29 @@
+"""
+Utility script to recursively compare the metadata and payload sizes of two .dpvtk archives.
+
+This tool validates the structural integrity of a conversion by comparing the number of timesteps, 
+rank participation, and both deflated/inflated bytes for every single MPI partition inside the archive.
+
+Execution Context:
+Can be run serially with standard Python or in parallel via mpiexec.
+"""
+
 import argparse
 import sys
 import pydpvz
 from mpi4py import MPI
 
 def diff_dpvtk(file1, file2):
+    """
+    Compares two .dpvtk archives for equivalence in timesteps and block payloads.
+    
+    Args:
+        file1 (str): Path to the first .dpvtk file.
+        file2 (str): Path to the second .dpvtk file.
+        
+    Returns:
+        bool: True if perfectly matched, False otherwise.
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     

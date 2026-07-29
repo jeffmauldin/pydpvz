@@ -1,3 +1,14 @@
+"""
+High-level utility to orchestrate ParaView animations and encode them via FFmpeg.
+
+Unlike the core `.py` utilities which must run *inside* `pvbatch`, this is a standard Python
+wrapper script. It automatically invokes `pvbatch --sym dpvtkanimate.py` to generate the 
+raw PNG frames on disk, and then shells out to `ffmpeg` to encode them into a compressed MP4 video.
+
+Execution Context:
+Run this normally: `python3 dpvtkvideo.py ...` (Do NOT wrap this script in `mpiexec` or `pvbatch`).
+"""
+
 import argparse
 import sys
 import subprocess
@@ -5,7 +16,19 @@ import shutil
 import glob
 import os
 
-def create_video(input_file, output_mp4, view_direction=None, timesteprange=None, keep_frames=False):
+def create_video(input_file, output_mp4, view_direction=None, timesteprange=None, keep_frames=False, config_path=None, fps=10):
+    """
+    Drives the `dpvtkanimate.py` utility to produce frames and encodes them into an MP4.
+    
+    Args:
+        input_file (str): The input .dpvtk file.
+        output_mp4 (str): The output MP4 file.
+        view_direction (str, optional): Look direction vector string (e.g. "[0,0,-1]").
+        timesteprange (str, optional): Timestep range string (e.g. "[0,10]").
+        keep_frames (bool): Whether to leave the generated PNGs on disk after encoding.
+        config_path (str, optional): JSON config for rendering pipeline options.
+        fps (int): Target framerate of the MP4.
+    """
     # Base name for temporary frames
     base_name = "tmp_video_frames"
     
@@ -19,6 +42,8 @@ def create_video(input_file, output_mp4, view_direction=None, timesteprange=None
         cmd[2] += f" --viewdirection \"{view_direction}\""
     if timesteprange:
         cmd[2] += f" --timesteprange \"{timesteprange}\""
+    if config_path:
+        cmd[2] += f" --config \"{config_path}\""
         
     print(f"Executing: {cmd[2]}")
     
@@ -41,9 +66,10 @@ def create_video(input_file, output_mp4, view_direction=None, timesteprange=None
     
     # ffmpeg command
     ffmpeg_cmd = [
-        "ffmpeg", "-y", "-framerate", "10",
+        "ffmpeg", "-y", "-framerate", str(fps),
         "-i", f"{base_name}_%04d.png",
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
         output_mp4
     ]
     
@@ -71,6 +97,8 @@ if __name__ == "__main__":
     parser.add_argument("--timesteprange", default=None,
                         help="Optional range of timesteps to render, e.g. '[24,36]'.")
     parser.add_argument("--keep-frames", action="store_true", help="Keep generated PNG frames after encoding")
+    parser.add_argument("--config", type=str, default=None, help="Path to JSON configuration file for rendering options.")
+    parser.add_argument("--fps", type=int, default=10, help="Framerate of the output video.")
 
     args = parser.parse_args()
-    create_video(args.input, args.output, args.viewdirection, args.timesteprange, args.keep_frames)
+    create_video(args.input, args.output, args.viewdirection, args.timesteprange, args.keep_frames, args.config, args.fps)

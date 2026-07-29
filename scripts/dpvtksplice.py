@@ -1,9 +1,27 @@
+"""
+Utility script to quickly concatenate multiple .dpvtk archives into a single archive.
+
+This bypasses VTK/ParaView entirely, executing raw bitwise transfers of the underlying 
+compressed MPI partitions from the input archives directly into a new output archive.
+It is extremely fast as it does not deserialize or reinflate the data payloads.
+
+Execution Context:
+Can be run serially with standard Python or in parallel via mpiexec.
+"""
+
 import argparse
 import sys
 from mpi4py import MPI
 import pydpvz
 
 def splice_dpvtk(input_files, output_file):
+    """
+    Sequentially splices the payloads of multiple .dpvtk files into an output file.
+    
+    Args:
+        input_files (list of str): Paths to input .dpvtk archives in chronological order.
+        output_file (str): Path to the concatenated output .dpvtk archive.
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()

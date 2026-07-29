@@ -1,13 +1,36 @@
+"""
+ParaView symmetric MPI utility to render a single screenshot from a .dpvtk archive.
+
+This script uses `pydpvz` to deserialize a single timestep from a .dpvtk file into a 
+distributed VTK memory object, then pushes it into ParaView's offscreen rendering pipeline 
+via `TrivialProducer`. Camera vectors and JSON styling configurations can be applied before 
+compositing a final PNG.
+
+Execution Context:
+Must be launched with `mpiexec -np N pvbatch --sym dpvtkscreenshot.py ...`
+"""
+
 import sys
 import argparse
 import ast
+import json
 from mpi4py import MPI
 import paraview.simple as paraview_simple
 import pydpvz
 from pydpvz.vtk_deserializer import deserialize_vtk_from_buffer
 import vtk
 
-def render_dpvtk(filename, output_png, view_direction=None, timestep=0):
+def render_dpvtk(filename, output_png, view_direction=None, timestep=0, config_path=None):
+    """
+    Renders a specific timestep of a .dpvtk archive to a PNG image.
+    
+    Args:
+        filename (str): Path to the input .dpvtk file.
+        output_png (str): Path for the output PNG image.
+        view_direction (list, optional): 3D vector representing camera look direction. Defaults to [0.0, 0.0, -1.0].
+        timestep (int): The timestep index to render. Defaults to 0.
+        config_path (str, optional): Path to a JSON configuration for advanced rendering options.
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -67,7 +90,17 @@ def render_dpvtk(filename, output_png, view_direction=None, timestep=0):
     # Show the producer
     display = paraview_simple.Show(producer, view, 'GeometryRepresentation')
     
-    # Default coloring is fine
+    # 3.5 Apply optional JSON configuration
+    if config_path:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        if 'color_by' in config:
+            cb = config['color_by']
+            display.ColorArrayName = [cb.get('association', 'POINTS'), cb.get('array_name')]
+            lut = paraview_simple.GetColorTransferFunction(cb.get('array_name'))
+            if 'range_min' in cb and 'range_max' in cb:
+                lut.RescaleTransferFunction(cb['range_min'], cb['range_max'])
+            display.LookupTable = lut
     
     # Use the user-provided or default viewing direction
     # To look *along* vector V, we place the camera at -V
@@ -113,8 +146,9 @@ if __name__ == "__main__":
     parser.add_argument("--viewdirection", "-vwdr", type=parse_vector, default=[0.0, 0.0, -1.0],
                         help="Optional look direction vector, e.g. '[0, 0, -1]'. Defaults to [0, 0, -1].")
     parser.add_argument("--timestep", type=int, default=0, help="Timestep index to render (defaults to 0).")
+    parser.add_argument("--config", type=str, default=None, help="Path to JSON configuration file for rendering options.")
 
     # Use parse_known_args because pvbatch passes its own arguments (e.g. --sym, --mesa)
     args, unknown = parser.parse_known_args()
         
-    render_dpvtk(args.input, args.output, args.viewdirection, args.timestep)
+    render_dpvtk(args.input, args.output, args.viewdirection, args.timestep, args.config)

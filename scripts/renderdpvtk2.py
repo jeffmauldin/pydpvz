@@ -1,3 +1,8 @@
+"""
+Legacy test script for rendering a single frame with MPI tracing debug prints. 
+Superceded by the robust `dpvtkscreenshot.py`.
+"""
+
 import sys
 from mpi4py import MPI
 import paraview.simple as paraview_simple

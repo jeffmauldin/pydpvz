@@ -1,13 +1,37 @@
+"""
+ParaView symmetric MPI utility to render animations directly from .dpvtk archives.
+
+This script parses a .dpvtk file using `pydpvz.DPvzVtk`, iterates over timesteps, deserializes the 
+VTK XML payloads, and composites the distributed blocks natively into ParaView's 
+`vtkPartitionedDataSetCollection`. It then leverages ParaView's offscreen rendering pipeline
+to produce a sequence of PNG screenshots representing an animation.
+
+Execution Context:
+Must be launched with `mpiexec -np N pvbatch --sym dpvtkanimate.py ...` to ensure all ranks participate 
+in the round-robin chunk reading and rendering process.
+"""
+
 import sys
 import argparse
 import ast
+import json
 from mpi4py import MPI
 import paraview.simple as paraview_simple
 import pydpvz
 from pydpvz.vtk_deserializer import deserialize_vtk_from_buffer
 import vtk
 
-def render_dpvtk_animation(filename, output_basename, view_direction=None, timesteprange=None):
+def render_dpvtk_animation(filename, output_basename, view_direction=None, timesteprange=None, config_path=None):
+    """
+    Renders an image sequence by iterating over timesteps in a .dpvtk archive.
+    
+    Args:
+        filename (str): Path to the input .dpvtk file.
+        output_basename (str): The prefix for the output image sequence (e.g., 'frame' -> 'frame_0000.png').
+        view_direction (list, optional): 3D vector representing camera look direction. Defaults to [0.0, 0.0, -1.0].
+        timesteprange (list, optional): Start and end timestep indices [start, end].
+        config_path (str, optional): Path to a JSON configuration for advanced rendering options.
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -45,6 +69,18 @@ def render_dpvtk_animation(filename, output_basename, view_direction=None, times
     producer = paraview_simple.TrivialProducer()
     view = paraview_simple.GetActiveViewOrCreate('RenderView')
     display = paraview_simple.Show(producer, view, 'GeometryRepresentation')
+    
+    # 3.5 Apply optional JSON configuration
+    if config_path:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        if 'color_by' in config:
+            cb = config['color_by']
+            display.ColorArrayName = [cb.get('association', 'POINTS'), cb.get('array_name')]
+            lut = paraview_simple.GetColorTransferFunction(cb.get('array_name'))
+            if 'range_min' in cb and 'range_max' in cb:
+                lut.RescaleTransferFunction(cb['range_min'], cb['range_max'])
+            display.LookupTable = lut
     
     # Configure camera viewing direction
     view.CameraPosition = [-view_direction[0], -view_direction[1], -view_direction[2]]
@@ -123,8 +159,9 @@ if __name__ == "__main__":
                         help="Optional look direction vector, e.g. '[0, 0, -1]'. Defaults to [0, 0, -1].")
     parser.add_argument("--timesteprange", type=parse_range, default=None,
                         help="Optional range of timesteps to render, e.g. '[24,36]'.")
+    parser.add_argument("--config", type=str, default=None, help="Path to JSON configuration file for rendering options.")
 
     # Use parse_known_args because pvbatch passes its own arguments (e.g. --sym, --mesa)
     args, unknown = parser.parse_known_args()
         
-    render_dpvtk_animation(args.input, args.output_basename, args.viewdirection, args.timesteprange)
+    render_dpvtk_animation(args.input, args.output_basename, args.viewdirection, args.timesteprange, args.config)

@@ -1,3 +1,15 @@
+"""
+ParaView symmetric MPI utility to extract a .dpvtk archive back into standard VTK files.
+
+This script executes in parallel, reading distributed data blocks using `pydpvz.DPvzVtk`
+and reconstructing a standard ParaView VTK pipeline. It then utilizes `SaveData()` to 
+export the distributed datasets back into a standard format like `.vtpc` or `.vtm`,
+acting as the reverse operation of `dpvtkconvert.py`.
+
+Execution Context:
+Must be launched with `mpiexec -np N pvbatch --sym dpvtkextract.py ...`
+"""
+
 import argparse
 import sys
 from mpi4py import MPI
@@ -7,6 +19,13 @@ from pydpvz.vtk_deserializer import deserialize_vtk_from_buffer
 import vtk
 
 def extract_dpvtk(filename, output_prefix):
+    """
+    Reads a .dpvtk file and saves each timestep as a standard ParaView VTK dataset.
+    
+    Args:
+        filename (str): The input .dpvtk archive path.
+        output_prefix (str): Base prefix for the output VTK files (e.g., 'out' -> 'out_0000.vtpc').
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()

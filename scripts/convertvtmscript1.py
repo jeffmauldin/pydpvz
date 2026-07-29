@@ -1,3 +1,8 @@
+"""
+Legacy conversion script for .vtm (VTK MultiBlock) datasets.
+Superceded by the unified `dpvtkconvert.py` script.
+"""
+
 import sys
 import argparse
 import paraview.simple as pv

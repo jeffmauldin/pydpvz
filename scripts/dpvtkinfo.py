@@ -1,9 +1,27 @@
+"""
+Utility script to inspect .dpvtk archive metadata without loading bulk payload data.
+
+This operates nearly instantaneously by reading only the header and table of contents.
+It reports the number of timesteps, rank participation per step, and the exact 
+deflated/inflated byte sizes of every MPI partition.
+
+Execution Context:
+Typically run serially via standard `python3 dpvtkinfo.py ...`, though it is MPI-safe.
+"""
+
 import sys
 import argparse
 from mpi4py import MPI
 import pydpvz
 
 def report_metadata(filename, terse=False):
+    """
+    Parses and prints the table of contents of a .dpvtk archive.
+    
+    Args:
+        filename (str): The input .dpvtk file.
+        terse (bool): If True, suppresses detailed partition-by-partition byte sizes.
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     
