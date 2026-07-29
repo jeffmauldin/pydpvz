@@ -451,3 +451,10 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
   - Ensure docstrings explain the required MPI execution context (e.g., symmetric mode requirements) and VTK pipeline integration.
 - [x] **Task 25.2**: Add comprehensive docstrings to the `pydpvz/` folder.
   - Update the Python wrapper files (`vtk_serializer.py`, etc.) with detailed docstrings explaining the serialization logic, MPI rank chunking, and PyBind11 C++ integration.
+
+### Phase 26: Sphinx / Read the Docs Website Implementation
+- [x] **Task 26.1**: Initialize Sphinx documentation in a new `docs/` folder. Configure `conf.py` to use `sphinx_rtd_theme` (for the classic look) and `myst-parser` (for Markdown support).
+- [x] **Task 26.2**: Configure Sphinx `autodoc` by ensuring the compiled `pydpvz` module is in the Sphinx Python path. Add any necessary MPI mocking/stubbing if Sphinx builds the docs in an environment without ParaView/MPI.
+- [x] **Task 26.3**: Write the Core API documentation pages. Create `api.md` that uses `autodoc` directives to automatically extract and format the C++ docstrings from Pybind11 (e.g., `DPvzFile`, `DPvzVtk`, `DPvzMode`).
+- [x] **Task 26.4**: Write Utility and Examples documentation. Integrate existing script usage guides (e.g., `dpvtkscreenshot.py`), CMake, and Spack instructions into structured Markdown pages.
+- [x] **Task 26.5**: Create a GitHub Actions workflow `.github/workflows/docs.yml` that automatically installs dependencies, builds the Sphinx HTML, and deploys it to the `gh-pages` branch whenever code is pushed to `main`.
