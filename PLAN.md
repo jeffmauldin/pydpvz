@@ -278,6 +278,28 @@ AI assistants or developers executing this plan **MUST update the checkboxes (`[
 - [ ] **Task 17.4**: Write a test for `dpvtkfilter.py`. Execute a slice filter on a known dataset, and assert that the output `.dpvtk` is generated successfully and its file size is strictly smaller than the un-filtered input archive.
 - [ ] **Task 17.5**: Write a test for `dpvtkvideo.py` testing the generation wrapper (ensuring it runs gracefully regardless of whether `ffmpeg` is installed in the test environment).
 
+### Phase 18: JSON Configuration for Rendering Utilities
+- [ ] **Task 18.1**: Update `dpvtkscreenshot.py` and `dpvtkanimate.py` to accept an optional `--config` argument that takes a path to a `.json` configuration file. Keep the input and output paths as positional arguments to preserve bash-scripting ease.
+- [ ] **Task 18.2**: If a config file is provided, parse it. Look for a `color_by` block specifying `"association"` (`POINTS` or `CELLS`), `"array_name"`, and optionally `"range_min"` and `"range_max"`.
+- [ ] **Task 18.3**: When creating the `Display` properties inside ParaView's Python API, if `color_by` is present, set `display.ColorArrayName = [config['color_by']['association'], config['color_by']['array_name']]`.
+- [ ] **Task 18.4**: Fetch the Color Transfer Function (LUT) via `paraview.simple.GetColorTransferFunction()`. If `range_min` and `range_max` are specified in the JSON, apply them using `lut.RescaleTransferFunction(min, max)`.
+- [ ] **Task 18.5**: Create a sample JSON configuration file (`sample_render_config.json`) in the project repository to serve as a template.
+
+### Phase 19: Deep Inspection Utility (`dpvtkprobe.py`)
+- [ ] **Task 19.1**: Create `scripts/dpvtkprobe.py` accepting an input `.dpvtk` file and an optional `--timestep` argument (defaulting to 0).
+- [ ] **Task 19.2**: Use round-robin logic to load block chunks for the specified timestep across the executing MPI ranks.
+- [ ] **Task 19.3**: Iterate through each local `vtkDataSet`. Use `GetPointData()`, `GetCellData()`, and `GetFieldData()` to extract the names of all arrays present and store them in local Python `set()`s.
+- [ ] **Task 19.4**: Use `MPI.COMM_WORLD.reduce` with a set union operator to gather all array names from all ranks into a master set on Rank 0.
+- [ ] **Task 19.5**: Have Rank 0 print a clean, consolidated console output of available Point, Cell, and Field (Global) data arrays.
+- [ ] **Task 19.6**: Add a test in `scripts/tests/test_utilities.py` ensuring the script runs without errors and correctly identifies expected arrays.
+
+### Phase 20: MPI Environment Inspector Utility (`dpvtkmpiinfo.py`) [COMPLETED]
+- [x] **Task 20.1**: Create `scripts/dpvtkmpiinfo.py` accepting a single argument: the path to a `pvbatch` executable (e.g., `./paraview_v610/bin/pvbatch`).
+- [x] **Task 20.2**: The script should use `subprocess` to execute `ldd <pvbatch_path>` and parse the output to locate the linked MPI shared library (e.g., `libmpi.so`).
+- [x] **Task 20.3**: Identify the MPI flavor (e.g., MPICH, OpenMPI, Intel MPI) based on the library name (e.g., `libmpi.so.12` vs `libmpi.so.40`) or path heuristics.
+- [x] **Task 20.4**: Determine the base installation prefix for the MPI runtime by resolving the library's path (e.g., stripping `lib/...` or `lib64/...` from the directory structure) and format it as a valid `CMAKE_PREFIX_PATH` that can be fed into CMake to guarantee ABI compatibility with ParaView.
+- [x] **Task 20.5**: Print a concise, human-readable summary to the console detailing the discovered MPI flavor, the absolute path to the loaded library, and the recommended `CMAKE_PREFIX_PATH`.
+
 ---
 
 ## 5. Instructions to Redo Work From Scratch
@@ -349,3 +371,46 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
 > **Critical Note on `pvbatch` and Deadlocks**: When running a Python script via `pvbatch` in parallel that executes collective MPI operations (like our `dpvz.write(comm)`), you **MUST** pass the `--sym` flag to `pvbatch` (Symmetric Mode). Without `--sym`, ParaView defaults to asymmetric client-server mode, meaning the Python script only executes on Rank 0, and Ranks 1+ sit idle in a C++ event loop. Rank 0 will hit the `archive.write()` barrier and deadlock forever waiting for the other ranks.
 
 > **Critical Note on Data Distribution during Read**: When writing utilities that read from `.dpvtk` archives (`dpvz.Archive.read_timestep()`), it is absolutely crucial to use a round-robin distribution to map written partitions to the currently available reading ranks. If you only read `step_toc[rank]`, you will fail to load all data blocks when reading an N-rank dataset on M-ranks (where `M < N`). Always loop via `for w_rank in range(rank, entry.ranks, size):` and append each loaded dataset partition to the local `vtkPartitionedDataSetCollection` using a monotonically incrementing local partition index.
+
+### Phase 21: Add Spack YAML Snippet Output to `dpvtkmpiinfo.py` [COMPLETED]
+- [x] **Task 21.1**: Open `scripts/dpvtkmpiinfo.py` and locate the end of the `get_mpi_info()` function, just after it prints the MPI Environment Inspector summary.
+- [x] **Task 21.2**: Determine the appropriate Spack package name based on the detected `flavor`. E.g.:
+  - `MPICH` -> `mpich`
+  - `OpenMPI` -> `openmpi`
+  - `Intel MPI` -> `intel-mpi`
+  - Otherwise, default to `mpi`.
+- [x] **Task 21.3**: Add print statements to output a YAML snippet formatted for a `spack.yaml` `packages:` section. The snippet must include `buildable: false`, `externals:`, and map the `spec` to the Spack package name and the `prefix` to the `prefix_path` already detected by the script. Example output to print:
+  ```yaml
+  --- Spack External Package Snippet ---
+    packages:
+      mpich:
+        buildable: false
+        externals:
+        - spec: mpich
+          prefix: /path/to/mpi
+  --------------------------------------
+  ```
+- [x] **Task 21.4**: Run `python3 scripts/dpvtkmpiinfo.py ./paraview_v610/bin/pvbatch` to test that the snippet prints correctly and incorporates the detected paths.
+
+### Phase 22: Create Custom Spack Repository for `py-dpvz` [COMPLETED]
+- [x] **Task 22.1**: Create the custom Spack repository directory structure: `spack-repo/packages/py-dpvz`.
+- [x] **Task 22.2**: Create `spack-repo/repo.yaml` with the following content to initialize the repository:
+  ```yaml
+  repo:
+    namespace: custom_pydpvz
+  ```
+- [x] **Task 22.3**: Create `spack-repo/packages/py-dpvz/package.py` and implement the `PyDpvz` class inheriting from `PythonPackage`.
+  - Include the standard Spack import (`from spack.package import *`).
+  - Set `homepage` and a default `git` URL pointing to the remote repository (e.g., `git = "https://github.com/sandialabs/pydpvz.git"`).
+  - Add a clearly documented fallback to support local installation for iterative development (e.g., `# git = f"file://{os.path.abspath(os.path.dirname(__file__))}/../../../"`).
+  - Define `version('main', branch='main')`.
+  - Define the required dependencies:
+    - `depends_on("python@3.8:", type=("build", "run"))`
+    - `depends_on("py-setuptools", type="build")`
+    - `depends_on("py-pybind11", type=("build", "link", "run"))`
+    - `depends_on("cmake", type="build")`
+    - `depends_on("mpi")`
+- [x] **Task 22.4**: Create a documentation file `spack-repo/README.md` detailing the two target workflows:
+  - **Workflow A (External MPI)**: Explain how to run `dpvtkmpiinfo.py`, paste the snippet into `spack.yaml` under `packages:`, run `spack repo add ./spack-repo`, and execute `spack install py-dpvz`.
+  - **Workflow B (Existing ParaView Env)**: Explain how to run `spack repo add ./spack-repo` inside an existing Spack environment containing ParaView, and then execute `spack install py-dpvz`.
+  - **Local Development**: Explain how to swap the `git` URL in `package.py` to the `file://` URL for local iterative testing.
