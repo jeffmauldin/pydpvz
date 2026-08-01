@@ -13,6 +13,8 @@
 
 **Key Points:**
 * **The "N vs M" Processor Trap**: Identified a critical bug where reading a 40-rank dataset on a 16-rank batch job silently dropped chunks 16-39. We resolved this by implementing a dynamic round-robin block distribution loop utilizing ParaView's `vtkPartitionedDataSetCollection`.
+* **Redundant Parallel Data Copying**: In multi-process runs, default pipeline executions caused every MPI rank to read and write an identical copy of the full dataset. Resolved by implementing explicit extent updates (`RequestUpdateExtent`) in custom writer plugins to request rank-local pieces.
+* **Multi-Block Hierarchy Loss & Empty Partitions**: Converted flat archive streams to support hierarchical structures (`hierarchy.json` metadata manifests), ensuring structural assembly names and block layouts are preserved even when individual MPI ranks contain zero local geometry cells.
 * **Pipeline Type Crashes**: Complex ParaView filters were returning raw `vtkDataObject`s instead of standard datasets, crashing the in-memory serializer. We fixed this by deeply interrogating the proxy's `GetClientSideObject()`.
 * **MPI ABI Deadlocks**: Prevented catastrophic deadlocks for future users by embedding a dynamic `ldd` MPI-detector into the setup scripts to automatically determine if ParaView is running MPICH or OpenMPI.
 

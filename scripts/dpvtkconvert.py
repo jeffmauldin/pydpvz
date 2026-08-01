@@ -69,6 +69,7 @@ def main():
         if rank == 0:
             print(f"  -> Processing timestep {i+1}/{len(timesteps)} (time={t})...")
         reader.UpdatePipeline(time=t)
+        writer.Time = t
         writer.UpdatePipeline()
     
     if rank == 0:

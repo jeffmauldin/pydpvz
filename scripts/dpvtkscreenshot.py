@@ -38,6 +38,8 @@ def render_dpvtk(filename, output_png, view_direction=None, timestep=0, config_p
     # 1. Read the DPvz archive and construct the local VTK dataset
     if rank == 0:
         print(f"about to start read of {filename} at timestep {timestep}")
+    else:
+        print("about to read rank " + str(rank))
     archive = pydpvz.DPvzVtk(filename, pydpvz.DPvzMode.DPvzReadOnly, comm, False)
     steps = archive.get_steps()
     
@@ -57,37 +59,56 @@ def render_dpvtk(filename, output_png, view_direction=None, timestep=0, config_p
     
     pdc = vtk.vtkPartitionedDataSetCollection()
     
-    local_part_idx = 0
+    part_counters = {}
     for w_rank in range(rank, entry.ranks, size):
         rank_entry = step_toc[w_rank]
         buffer_bytes = archive.get_data(rank_entry)
-        datasets = deserialize_vtk_from_buffer(buffer_bytes)
+        items = deserialize_vtk_from_buffer(buffer_bytes)
         
-        for ds in datasets:
-            pdc.SetPartition(0, local_part_idx, ds)
-            local_part_idx += 1
+        for item in items:
+            idx = item["index"]
+            name = item["name"]
+            ds = item["dataset"]
+            while pdc.GetNumberOfPartitionedDataSets() <= idx:
+                pdc.SetNumberOfPartitionedDataSets(idx + 1)
+            if name:
+                meta = pdc.GetMetaData(idx)
+                if meta:
+                    meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
+            if ds is not None:
+                p_idx = part_counters.get(idx, 0)
+                pdc.SetPartition(idx, p_idx, ds)
+                part_counters[idx] = p_idx + 1
             
     if rank == 0:
         print(f"completed read of {filename} at timestep {timestep}")
+    else:
+        print("completed read rank " + str(rank))
             
     # 2. Push the local VTK dataset into the ParaView pipeline
     # TrivialProducer allows us to bridge raw VTK objects in Python memory 
     # to ParaView's proxy-based pipeline.
+    print("cp 1000")
     producer = paraview_simple.TrivialProducer()
     
     # Get the underlying C++ VTK algorithm object for this proxy and set its dataset
+    print("cp 2000")
     client_obj = producer.GetClientSideObject()
+    print("cp 3000")
     client_obj.SetOutput(pdc)
     
     # Update the pipeline so ParaView knows about the data bounds, etc.
+    print("cp 4000")
     producer.UpdatePipeline()
 
+    print("cp 5000")
     # 3. Setup ParaView visualization
     # We only need to configure the view and save the screenshot on rank 0,
     # but the pipeline update and rendering commands are collective in symmetric mode.
     view = paraview_simple.GetActiveViewOrCreate('RenderView')
     
     # Show the producer
+    print("cp 6000")
     display = paraview_simple.Show(producer, view, 'GeometryRepresentation')
     
     # 3.5 Apply optional JSON configuration
@@ -102,35 +123,43 @@ def render_dpvtk(filename, output_png, view_direction=None, timestep=0, config_p
                 lut.RescaleTransferFunction(cb['range_min'], cb['range_max'])
             display.LookupTable = lut
     
+    print("cp 7000")
     # Use the user-provided or default viewing direction
     # To look *along* vector V, we place the camera at -V
     view.CameraPosition = [-view_direction[0], -view_direction[1], -view_direction[2]]
     view.CameraFocalPoint = [0.0, 0.0, 0.0]
     
+    print("cp 8000")
     # Prevent gimbal lock if looking straight down/up the Z axis
     if view_direction[0] == 0.0 and view_direction[1] == 0.0:
         view.CameraViewUp = [0.0, 1.0, 0.0]
     else:
         view.CameraViewUp = [0.0, 0.0, 1.0]
 
+    print("cp 9000")
     # Reset camera to fit the newly loaded dataset while preserving the viewing direction
     paraview_simple.ResetCamera(view)
 
     
+    print("cp 10000")
     # Ensure the view is rendered
     paraview_simple.Render()
 
+    print("cp 11000")
     # 4. Save screenshot
     # Only rank 0 actually writes the final composited PNG file
     if rank == 0:
+        print("cp 12000")
         print(f"about to save screenshot {output_png} for timestep {timestep}")
         paraview_simple.SaveScreenshot(output_png, view, ImageResolution=[1920, 1080])
         print(f"completed save screenshot {output_png} for timestep {timestep}")
     else:
+        print("cp 12001")
         # In symmetric mode, other ranks participate in parallel rendering but don't write the file.
         paraview_simple.SaveScreenshot(output_png, view, ImageResolution=[1920, 1080])
 
 def parse_vector(val):
+    print("cp 12000")
     try:
         vec = ast.literal_eval(val)
         if not isinstance(vec, list) or len(vec) != 3:
@@ -138,6 +167,7 @@ def parse_vector(val):
         return [float(x) for x in vec]
     except Exception:
         raise argparse.ArgumentTypeError("View direction must be a list of 3 numbers, e.g., '[0,1,0]'")
+    print("cp 13000")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Render a .dpvtk file to an image.")

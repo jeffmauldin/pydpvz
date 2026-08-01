@@ -12,7 +12,9 @@ This repository includes a suite of battle-tested Python scripts located in the 
 
 | Utility | Description |
 |---|---|
+| **`dpvtkconvert.py`** | Universal parallel converter. Transforms multi-block (`.vtm`), partitioned dataset collections (`.vtpc`), and Exodus II (`.ex2`) files into compressed `.dpvtk` archives while preserving exact dataset hierarchy and time step values. |
 | **`dpvtkinfo.py`** | Extremely fast metadata reporter. Instantly reads archive Table of Contents (TOC), step counts, and rank chunk byte-sizes without touching bulk geometry data. |
+| **`dpvtkprobe.py`** | Parallel array inspection tool. Interrogates point, cell, and field data arrays inside a `.dpvtk` archive across all MPI ranks using custom set union reductions. |
 | **`dpvtkscreenshot.py`** | A parallel renderer that loads a specific timestep from a `.dpvtk` archive, configures the camera, and composites a high-resolution `.png` image using IceT. |
 | **`dpvtkanimate.py`** | Loads a range of timesteps and parallel-renders a sequence of raw `.png` frames. |
 | **`dpvtkvideo.py`** | A wrapper for `dpvtkanimate.py` that seamlessly pipes the generated frames into **FFmpeg** to output a high-quality `.mp4` video file. |
@@ -20,6 +22,13 @@ This repository includes a suite of battle-tested Python scripts located in the 
 | **`dpvtkextract.py`** | Parallel extractor that unwraps a `.dpvtk` archive back into raw, standard `.vtpc` and piece files for external tooling. |
 | **`dpvtksplice.py`** | Ultra-fast binary concatenator. Splices multiple `.dpvtk` chunks into a single unified archive purely through raw byte-copying (bypassing VTK entirely). |
 | **`dpvtkdiff.py`** | Performs a metadata and compressed-byte-size rank-by-rank comparison of two `.dpvtk` archives to verify integrity. |
+
+---
+
+## 🏛️ Core Architectural Highlights
+
+- **True Parallel Domain Partitioning**: Custom writer plugins (`DPvtkWriter`) actively coordinate with ParaView's streaming pipeline executives via `RequestUpdateExtent`. In multi-process MPI executions, each process sets its piece number and total pieces on upstream filters, ensuring every rank serializes only its partitioned slice of the simulation domain with **zero data duplication**.
+- **Dataset Hierarchy Preservation**: Rather than flattening multi-block (`.vtm`) or partitioned dataset collections (`.vtpc`), `pydpvz` extracts top-level block structures and block names (e.g., separating structural vehicle assemblies or fluid domains), embedding a lightweight `hierarchy.json` record directly into the archive stream. When reading an archive, ParaView natively rebuilds the `vtkPartitionedDataSetCollection` with accurate component hierarchies, even across MPI ranks where specific local blocks contain zero geometry cells.
 
 ---
 

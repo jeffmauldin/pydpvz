@@ -12,43 +12,96 @@ import re
 
 def deserialize_vtk_from_buffer(buffer_bytes):
     """
-    Parses a DPvzVtkData buffer containing multiple `<FILE NAME='...'>` blocks.
+    Parses a DPvzVtkData buffer containing multiple `<FILE NAME='...'>` blocks and 
+    optional hierarchy metadata (`<FILE NAME='hierarchy.json'>`).
     
     Args:
         buffer_bytes (bytes): The raw payload extracted from the DPvz archive.
         
     Returns:
-        list of vtkDataSet: A list of the parsed VTK data objects (e.g., vtkUnstructuredGrid).
+        list of dict: Each dictionary contains 'index' (int), 'name' (str), and 'dataset' (vtkDataSet or None).
     """
-    # The buffer contains blocks like:
-    # <FILE NAME='filename.vtu'>\n ... data ... \n</FILE NAME='filename.vtu'>\n
-    
+    import json
     text = buffer_bytes.decode('utf-8', errors='ignore')
     
-    # Find all <FILE NAME='...'> headers
-    datasets = []
-    
     pattern = r"<FILE NAME='([^']+)'>\n(.*?)\n</FILE NAME='\1'>\n"
-    # DOTALL allows dot to match newlines
-    matches = re.finditer(pattern, text, re.DOTALL)
+    matches = dict(re.findall(pattern, text, re.DOTALL))
     
-    for match in matches:
-        filename = match.group(1)
-        data = match.group(2)
-        
+    results = []
+    
+    if 'hierarchy.json' in matches:
+        try:
+            meta = json.loads(matches['hierarchy.json'])
+            for blk in meta.get("blocks", []):
+                idx = blk.get("index", 0)
+                name = blk.get("name", f"block_{idx}")
+                filename = blk.get("filename")
+                ds = None
+                if filename and filename in matches:
+                    data = matches[filename]
+                    if filename.endswith(".vtu"):
+                        reader = vtk.vtkXMLUnstructuredGridReader()
+                    elif filename.endswith(".vtp"):
+                        reader = vtk.vtkXMLPolyDataReader()
+                    else:
+                        reader = vtk.vtkXMLGenericDataObjectReader()
+                    reader.SetReadFromInputString(1)
+                    reader.SetInputString(data)
+                    reader.Update()
+                    ds = reader.GetOutput()
+                results.append({"index": idx, "name": name, "dataset": ds})
+            return results
+        except Exception:
+            pass
+            
+    # Legacy fallback for archives without hierarchy.json
+    idx = 0
+    for filename, data in matches.items():
+        if filename == 'hierarchy.json':
+            continue
         if filename.endswith(".vtu"):
             reader = vtk.vtkXMLUnstructuredGridReader()
         elif filename.endswith(".vtp"):
             reader = vtk.vtkXMLPolyDataReader()
         else:
             reader = vtk.vtkXMLGenericDataObjectReader()
-            
         reader.SetReadFromInputString(1)
         reader.SetInputString(data)
         reader.Update()
-        
         ds = reader.GetOutput()
         if ds:
-            datasets.append(ds)
+            results.append({"index": 0, "name": "block_0", "dataset": ds})
+            idx += 1
             
-    return datasets
+    return results
+
+
+def populate_pdc_from_buffer(pdc, buffer_bytes, part_counters):
+    """
+    Parses a buffer and populates a vtkPartitionedDataSetCollection while maintaining
+    the correct block names and partition indices across multiple writing ranks.
+    
+    Args:
+        pdc (vtkPartitionedDataSetCollection): Target collection to populate.
+        buffer_bytes (bytes): Raw payload from archive.get_data().
+        part_counters (dict): Map tracking current partition index per block index.
+        
+    Returns:
+        list of dict: The parsed items returned by deserialize_vtk_from_buffer.
+    """
+    items = deserialize_vtk_from_buffer(buffer_bytes)
+    for item in items:
+        idx = item["index"]
+        name = item["name"]
+        ds = item["dataset"]
+        while pdc.GetNumberOfPartitionedDataSets() <= idx:
+            pdc.SetNumberOfPartitionedDataSets(idx + 1)
+        if name:
+            meta = pdc.GetMetaData(idx)
+            if meta:
+                meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
+        if ds is not None:
+            p_idx = part_counters.get(idx, 0)
+            pdc.SetPartition(idx, p_idx, ds)
+            part_counters[idx] = p_idx + 1
+    return items

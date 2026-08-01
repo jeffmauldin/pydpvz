@@ -42,15 +42,28 @@ def read_dpvtk(filename):
             buffer_bytes = archive.get_data(rank_entry)
             
             # Deserialize into VTK objects
-            datasets = deserialize_vtk_from_buffer(buffer_bytes)
-            print(f"[{rank}] Deserialized {len(datasets)} VTK datasets from buffer.")
+            items = deserialize_vtk_from_buffer(buffer_bytes)
+            print(f"[{rank}] Deserialized {len(items)} items from buffer.")
             
             # Put them into a vtkPartitionedDataSetCollection for ParaView pipeline
             pdc = vtk.vtkPartitionedDataSetCollection()
-            for idx, ds in enumerate(datasets):
-                pdc.SetPartition(0, idx, ds)
+            part_counters = {}
+            for item in items:
+                idx = item["index"]
+                name = item["name"]
+                ds = item["dataset"]
+                while pdc.GetNumberOfPartitionedDataSets() <= idx:
+                    pdc.SetNumberOfPartitionedDataSets(idx + 1)
+                if name:
+                    meta = pdc.GetMetaData(idx)
+                    if meta:
+                        meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
+                if ds is not None:
+                    p_idx = part_counters.get(idx, 0)
+                    pdc.SetPartition(idx, p_idx, ds)
+                    part_counters[idx] = p_idx + 1
                 
-            print(f"[{rank}] Successfully loaded {len(datasets)} partitions for cycle {entry.cycle}.")
+            print(f"[{rank}] Successfully loaded {len(items)} partitions for cycle {entry.cycle}.")
         else:
             print(f"[{rank}] Idle for this cycle (reading ranks {size} > writing ranks {entry.ranks}).")
 

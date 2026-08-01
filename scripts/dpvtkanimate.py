@@ -100,15 +100,26 @@ def render_dpvtk_animation(filename, output_basename, view_direction=None, times
         
         pdc = vtk.vtkPartitionedDataSetCollection()
         
-        local_part_idx = 0
+        part_counters = {}
         for w_rank in range(rank, entry.ranks, size):
             rank_entry = step_toc[w_rank]
             buffer_bytes = archive.get_data(rank_entry)
-            datasets = deserialize_vtk_from_buffer(buffer_bytes)
+            items = deserialize_vtk_from_buffer(buffer_bytes)
             
-            for ds in datasets:
-                pdc.SetPartition(0, local_part_idx, ds)
-                local_part_idx += 1
+            for item in items:
+                idx = item["index"]
+                name = item["name"]
+                ds = item["dataset"]
+                while pdc.GetNumberOfPartitionedDataSets() <= idx:
+                    pdc.SetNumberOfPartitionedDataSets(idx + 1)
+                if name:
+                    meta = pdc.GetMetaData(idx)
+                    if meta:
+                        meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
+                if ds is not None:
+                    p_idx = part_counters.get(idx, 0)
+                    pdc.SetPartition(idx, p_idx, ds)
+                    part_counters[idx] = p_idx + 1
                 
         if rank == 0:
             print(f"completed read of {filename} at timestep {timestep}")

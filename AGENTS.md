@@ -22,22 +22,39 @@ This repository contains `pydpvz`, a set of lightweight Python bindings for Sand
 3. **Round-Robin Chunk Distribution on Read**:
    When reading from `.dpvtk` archives, you cannot assume a 1-to-1 mapping between the reading MPI rank and the data block index. Datasets written by `N` ranks might be read by `M` ranks. You **MUST** use a round-robin distribution loop to load chunks:
    ```python
-   local_part_idx = 0
+   part_counters = {}
    for w_rank in range(rank, entry.ranks, size):
        rank_entry = step_toc[w_rank]
        buffer_bytes = archive.get_data(rank_entry)
-       datasets = deserialize_vtk_from_buffer(buffer_bytes)
-       for ds in datasets:
-           pdc.SetPartition(0, local_part_idx, ds)
-           local_part_idx += 1
+       items = deserialize_vtk_from_buffer(buffer_bytes)
+       for item in items:
+           idx = item["index"]
+           name = item["name"]
+           ds = item["dataset"]
+           while pdc.GetNumberOfPartitionedDataSets() <= idx:
+               pdc.SetNumberOfPartitionedDataSets(idx + 1)
+           if name:
+               meta = pdc.GetMetaData(idx)
+               if meta:
+                   meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
+           if ds is not None:
+               p_idx = part_counters.get(idx, 0)
+               pdc.SetPartition(idx, p_idx, ds)
+               part_counters[idx] = p_idx + 1
    ```
-   ParaView will securely and natively composite these disjoint blocks inside the `vtkPartitionedDataSetCollection`.
+   ParaView will securely and natively composite these disjoint blocks inside the `vtkPartitionedDataSetCollection` while preserving block hierarchy and names.
 
 4. **VTK Pipeline Requirements**:
    When extracting data from ParaView filters (like `Slice`), always use `.GetClientSideObject().GetOutputDataObject(0)`. Do not just use `.GetOutput()`, as some algorithms return `vtkDataObject` instead of `vtkDataSet`, which will crash the serialization logic.
 
 5. **Dependency Minimalism**:
    This project prides itself on having an ultra-lean dependency tree. Do not introduce heavy libraries like `numpy`, `scipy`, `pandas`, or `h5py` unless absolutely unavoidable and explicitly approved by the human user. The core relies entirely on `mpi4py`, `zlib`, and the Python standard library.
+
+6. **Parallel Piece Extent Synchronization (`RequestUpdateExtent`)**:
+   When implementing custom VTK writer algorithms or pipeline sinks (such as `DPvtkWriter` in `scripts/dpvtk_writer_plugin.py`), you **MUST** implement `RequestUpdateExtent(self, request, inInfo, outInfo)` to dynamically set `UPDATE_PIECE_NUMBER()` to the local MPI rank and `UPDATE_NUMBER_OF_PIECES()` to the communicator size on upstream executive ports. Without this explicit request, upstream readers default to serial piece requests (piece 0 of 1 on every process), causing every MPI rank to read and write an identical copy of the full dataset into the archive ($N\times$ redundant bloat).
+
+7. **Hierarchical Dataset Preservation & Empty Partitions**:
+   When serializing composite datasets (`vtkMultiBlockDataSet` or `vtkPartitionedDataSetCollection`) to `.dpvtk` archives, never blindly flatten top-level blocks into a single unstructured grid. You must maintain block hierarchy and block names by using `pydpvz.vtk_serializer.extract_hierarchy_and_blocks()`, which embeds a `<FILE NAME='hierarchy.json'>` metadata manifest into each rank's archive stream. In parallel runs, some ranks may own zero geometry cells/points for specific blocks; you must preserve these block entries in `hierarchy.json` without executing or writing empty mesh byte payloads.
 
 ## How to Proceed
 If the user has asked you to add a new feature or utility:

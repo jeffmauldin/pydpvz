@@ -83,6 +83,16 @@ The primary goal is to enable parallel `pvbatch` jobs to read complex partitione
 * **Analysis**: If the read utilities naively index `step_toc[rank]`, any dataset written by `N` ranks but read by `M` ranks (where `M < N`) will truncate and silently lose `N - M` blocks of data.
 * **Decision**: All `.dpvtk` reading utilities (`dpvtkscreenshot.py`, `dpvtkanimate.py`, `dpvtkextract.py`, etc.) MUST implement a round-robin chunk distribution loop (`for w_rank in range(rank, entry.ranks, size):`). This gracefully assigns multiple written data chunks to each available reading process. ParaView natively composites these disjoint blocks securely inside a `vtkPartitionedDataSetCollection`.
 
+### Decision 7: Parallel Piece Request Coordination (`RequestUpdateExtent`)
+* **Socratic Question**: *How do we ensure each MPI rank converts only its local slice of a distributed dataset instead of duplicating the entire global mesh on every process?*
+* **Analysis**: When ParaView executes a distributed filter pipeline in symmetric batch mode (`pvbatch --sym`), data sources (such as `XMLMultiBlockReader` or `IOSSReader`) rely on downstream sink algorithms to instruct them on how to partition the data across MPI processes. If a writer plugin does not implement an explicit update extent request, VTK falls back to serial default requests (piece 0 of 1 on every process), causing all $N$ ranks to read and write an identical full-dataset copy into the `.dpvtk` file ($N\times$ redundant bloat).
+* **Decision**: All custom VTK writer algorithm plugins (`DPvtkWriter`) MUST implement `RequestUpdateExtent(self, request, inInfo, outInfo)`. Within this method, the plugin must query `MPI.COMM_WORLD` and set `UPDATE_PIECE_NUMBER()` to `comm.Get_rank()` and `UPDATE_NUMBER_OF_PIECES()` to `comm.Get_size()`. This ensures true distributed partitioning with zero data duplication.
+
+### Decision 8: Hierarchical Dataset Preservation & Metadata Serialization
+* **Socratic Question**: *How do we preserve complex multi-block hierarchies and component names when serializing data to DPvz archives, especially when partitions on some MPI ranks contain zero cells or points?*
+* **Analysis**: Converting composite datasets (`vtkMultiBlockDataSet` or `vtkPartitionedDataSetCollection`) by flattening all top-level blocks into a single amorphous unstructured grid destroys critical simulation metadata (e.g., structural part names like `block_1`, `block_2` in car crash or aerospace meshes). Furthermore, in partitioned MPI environments, a local rank might own geometry for `block_1` but zero cells for `block_2`. If empty partitions cause serialization errors or omit hierarchy structure, reconstruction upon reading will fail or lose block identities.
+* **Decision**: `pydpvz.vtk_serializer` MUST implement hierarchical block traversal (`extract_hierarchy_and_blocks()`). Instead of merging disjoint blocks, it extracts individual top-level blocks with their indices and names and serializes an explicit `<FILE NAME='hierarchy.json'>` manifest into every rank's archive stream alongside non-empty geometry blocks. Conversely, `pydpvz.vtk_deserializer` and all ParaView reading scripts must parse `hierarchy.json` to reconstruct the exact multi-block tree inside a native `vtkPartitionedDataSetCollection`, assigning block metadata accurately even when local geometries are empty.
+
 ---
 
 ## 3. Parallel Directory Layout
@@ -137,14 +147,14 @@ The primary goal is to enable parallel `pvbatch` jobs to read complex partitione
 
 AI assistants or developers executing this plan **MUST update the checkboxes (`[ ]` -> `[x]`)** as tasks are completed.
 
-### Phase 1: Environment Setup & Sample Data Verification
+### Phase 1: Environment Setup & Sample Data Verification [COMPLETED]
 - [x] **Task 1.1**: Verify existing datasets in `sample_data/` (`can_data`, `rigid_body_data`, `hifire_example_data`).
 - [x] **Task 1.2**: Write `scripts/setup_paraview.sh` to fetch and locally cache ParaView 6.1.0 (`paraview_6.1.0.tar.gz`).
 - [x] **Task 1.3**: Extract ParaView 6.1.0 into `/workspaces/AllVibesDemo/paraview_v610`.
 - [x] **Task 1.4**: Test `pvpython` and `pvbatch` execution, verifying Python 3.12 version and embedded MPI runtime.
 - [x] **Task 1.5**: Confirm disk space remaining on `D:\`.
 
-### Phase 2: Create Parallel `pydpvz` Repository & C++ Bindings
+### Phase 2: Create Parallel `pydpvz` Repository & C++ Bindings [COMPLETED]
 - [x] **Task 2.1**: Initialize the parallel directory `/workspaces/AllVibesDemo/pydpvz` with `pyproject.toml`, `setup.py`, and `CMakeLists.txt`.
 - [x] **Task 2.2**: Implement `pydpvz/src/mpi_caster.h` for `mpi4py` to `MPI_Comm` pointer casting.
 - [x] **Task 2.3**: Implement `pydpvz/src/main_bindings.cpp` exposing:
@@ -154,7 +164,7 @@ AI assistants or developers executing this plan **MUST update the checkboxes (`[
   - `DPvzTocEntry` and `DPvzRankToc` struct bindings
 - [x] **Task 2.4**: Build `pydpvz` in editable mode (`pip install -e /workspaces/AllVibesDemo/pydpvz`) and verify `import pydpvz` in `python3` and `pvpython`.
 
-### Phase 3: `pydpvz` Package Unit Testing Suite
+### Phase 3: `pydpvz` Package Unit Testing Suite [COMPLETED]
 - [x] **Task 3.1**: Create `pydpvz/tests/test_serial_io.py` testing:
   - File creation (`DPvzCreate`, `DPvzReplace`).
   - Serial buffer writing and reading (`write`, `get_data`).
@@ -166,7 +176,7 @@ AI assistants or developers executing this plan **MUST update the checkboxes (`[
 - [x] **Task 3.3**: Run `pytest` and `mpirun -n 2 python3 -m pytest` on `pydpvz/tests/`.
 - [x] **Task 3.4**: Validate output archives using `dpvz/utils/dpvtk-ar-ser --list`.
 
-### Phase 4: VTK Dataset Serializer Implementation (`.vtpc`, `.ex2`, `.vtm`)
+### Phase 4: VTK Dataset Serializer Implementation (`.vtpc`, `.ex2`, `.vtm`) [COMPLETED]
 - [x] **Task 4.1**: Implement `pydpvz/pydpvz/vtk_serializer.py` containing:
   - `serialize_partitioned_dataset_collection(pdc, rank, cycle, time)`
   - `serialize_multiblock_dataset(mb, rank, cycle, time)`
@@ -196,7 +206,7 @@ AI assistants or developers executing this plan **MUST update the checkboxes (`[
 - [x] **Task 6.1**: Implement ability to read `.dpvtk` files back into ParaView.
 - [x] **Task 6.2**: Test parallel `.dpvtk` reading performance.
 
-### Phase 7: Utility Scripts Library - `pvbatch` Screenshot & Environment Setup
+### Phase 7: Utility Scripts Library - `pvbatch` Screenshot & Environment Setup [COMPLETED]
 - [x] **Task 7.1**: Write a shell script (`scripts/setup_env.sh`) that sets the appropriate `PYTHONPATH` and `LD_LIBRARY_PATH` so that `pydpvz` and `dpvz` are accessible by `pvbatch` / `pvpython` when sourced.
 - [x] **Task 7.2**: Write `scripts/dpvtkscreenshot.py` that utilizes ParaView to open a `.dpvtk` file, apply the `Show()` command, position the camera appropriately, and save a screenshot as a `.png` via `SaveScreenshot()`. The script must support both serial (1 process) and parallel MPI execution. The script must accept an optional `--viewdirection` / `-vwdr` argument defaulting to `[0, 0, -1]`, and provide process-zero console feedback before and after reading data and saving the image.
 - [x] **Task 7.3**: Write tests/validations to confirm the screenshot script functions correctly (testing with `--mesa` to ensure off-screen rendering works).
@@ -271,27 +281,27 @@ AI assistants or developers executing this plan **MUST update the checkboxes (`[
 - [x] **Task 16.4**: If `ffmpeg` is *not* found, gracefully log a message explaining that frames were generated but video encoding was skipped.
 - [x] **Task 16.5**: Add an optional `--keep-frames` flag to prevent the script from deleting the raw PNGs after successful encoding.
 
-### Phase 17: Utility Integration Testing
-- [ ] **Task 17.1**: Create `scripts/tests/test_utilities.py` to hold automated test cases for the new ecosystem.
-- [ ] **Task 17.2**: Write a test for `dpvtkextract.py`. Assert that running it produces the expected `.vtm` and associated directory structures.
-- [ ] **Task 17.3**: Write a test for `dpvtksplice.py` and `dpvtkdiff.py`. Splice two copies of a small test archive together, then verify the output archive has double the timesteps. Use `dpvtkdiff.py` programmatically to compare two identical files and ensure it returns success.
-- [ ] **Task 17.4**: Write a test for `dpvtkfilter.py`. Execute a slice filter on a known dataset, and assert that the output `.dpvtk` is generated successfully and its file size is strictly smaller than the un-filtered input archive.
-- [ ] **Task 17.5**: Write a test for `dpvtkvideo.py` testing the generation wrapper (ensuring it runs gracefully regardless of whether `ffmpeg` is installed in the test environment).
+### Phase 17: Utility Integration Testing [COMPLETED]
+- [x] **Task 17.1**: Create `scripts/tests/test_utilities.py` to hold automated test cases for the new ecosystem.
+- [x] **Task 17.2**: Write a test for `dpvtkextract.py`. Assert that running it produces the expected `.vtm` and associated directory structures.
+- [x] **Task 17.3**: Write a test for `dpvtksplice.py` and `dpvtkdiff.py`. Splice two copies of a small test archive together, then verify the output archive has double the timesteps. Use `dpvtkdiff.py` programmatically to compare two identical files and ensure it returns success.
+- [x] **Task 17.4**: Write a test for `dpvtkfilter.py`. Execute a slice filter on a known dataset, and assert that the output `.dpvtk` is generated successfully and its file size is strictly smaller than the un-filtered input archive.
+- [x] **Task 17.5**: Write a test for `dpvtkvideo.py` testing the generation wrapper (ensuring it runs gracefully regardless of whether `ffmpeg` is installed in the test environment).
 
-### Phase 18: JSON Configuration for Rendering Utilities
-- [ ] **Task 18.1**: Update `dpvtkscreenshot.py` and `dpvtkanimate.py` to accept an optional `--config` argument that takes a path to a `.json` configuration file. Keep the input and output paths as positional arguments to preserve bash-scripting ease.
-- [ ] **Task 18.2**: If a config file is provided, parse it. Look for a `color_by` block specifying `"association"` (`POINTS` or `CELLS`), `"array_name"`, and optionally `"range_min"` and `"range_max"`.
-- [ ] **Task 18.3**: When creating the `Display` properties inside ParaView's Python API, if `color_by` is present, set `display.ColorArrayName = [config['color_by']['association'], config['color_by']['array_name']]`.
-- [ ] **Task 18.4**: Fetch the Color Transfer Function (LUT) via `paraview.simple.GetColorTransferFunction()`. If `range_min` and `range_max` are specified in the JSON, apply them using `lut.RescaleTransferFunction(min, max)`.
-- [ ] **Task 18.5**: Create a sample JSON configuration file (`sample_render_config.json`) in the project repository to serve as a template.
+### Phase 18: JSON Configuration for Rendering Utilities [COMPLETED]
+- [x] **Task 18.1**: Update `dpvtkscreenshot.py` and `dpvtkanimate.py` to accept an optional `--config` argument that takes a path to a `.json` configuration file. Keep the input and output paths as positional arguments to preserve bash-scripting ease.
+- [x] **Task 18.2**: If a config file is provided, parse it. Look for a `color_by` block specifying `"association"` (`POINTS` or `CELLS`), `"array_name"`, and optionally `"range_min"` and `"range_max"`.
+- [x] **Task 18.3**: When creating the `Display` properties inside ParaView's Python API, if `color_by` is present, set `display.ColorArrayName = [config['color_by']['association'], config['color_by']['array_name']]`.
+- [x] **Task 18.4**: Fetch the Color Transfer Function (LUT) via `paraview.simple.GetColorTransferFunction()`. If `range_min` and `range_max` are specified in the JSON, apply them using `lut.RescaleTransferFunction(min, max)`.
+- [x] **Task 18.5**: Create a sample JSON configuration file (`sample_render_config.json`) in the project repository to serve as a template.
 
-### Phase 19: Deep Inspection Utility (`dpvtkprobe.py`)
-- [ ] **Task 19.1**: Create `scripts/dpvtkprobe.py` accepting an input `.dpvtk` file and an optional `--timestep` argument (defaulting to 0).
-- [ ] **Task 19.2**: Use round-robin logic to load block chunks for the specified timestep across the executing MPI ranks.
-- [ ] **Task 19.3**: Iterate through each local `vtkDataSet`. Use `GetPointData()`, `GetCellData()`, and `GetFieldData()` to extract the names of all arrays present and store them in local Python `set()`s.
-- [ ] **Task 19.4**: Use `MPI.COMM_WORLD.reduce` with a set union operator to gather all array names from all ranks into a master set on Rank 0.
-- [ ] **Task 19.5**: Have Rank 0 print a clean, consolidated console output of available Point, Cell, and Field (Global) data arrays.
-- [ ] **Task 19.6**: Add a test in `scripts/tests/test_utilities.py` ensuring the script runs without errors and correctly identifies expected arrays.
+### Phase 19: Deep Inspection Utility (`dpvtkprobe.py`) [COMPLETED]
+- [x] **Task 19.1**: Create `scripts/dpvtkprobe.py` accepting an input `.dpvtk` file and an optional `--timestep` argument (defaulting to 0).
+- [x] **Task 19.2**: Use round-robin logic to load block chunks for the specified timestep across the executing MPI ranks.
+- [x] **Task 19.3**: Iterate through each local `vtkDataSet`. Use `GetPointData()`, `GetCellData()`, and `GetFieldData()` to extract the names of all arrays present and store them in local Python `set()`s.
+- [x] **Task 19.4**: Use `MPI.COMM_WORLD.reduce` with a set union operator to gather all array names from all ranks into a master set on Rank 0.
+- [x] **Task 19.5**: Have Rank 0 print a clean, consolidated console output of available Point, Cell, and Field (Global) data arrays.
+- [x] **Task 19.6**: Add a test in `scripts/tests/test_utilities.py` ensuring the script runs without errors and correctly identifies expected arrays.
 
 ### Phase 20: MPI Environment Inspector Utility (`dpvtkmpiinfo.py`) [COMPLETED]
 - [x] **Task 20.1**: Create `scripts/dpvtkmpiinfo.py` accepting a single argument: the path to a `pvbatch` executable (e.g., `./paraview_v610/bin/pvbatch`).
@@ -415,7 +425,7 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
   - **Workflow B (Existing ParaView Env)**: Explain how to run `spack repo add ./spack-repo` inside an existing Spack environment containing ParaView, and then execute `spack install py-dpvz`.
   - **Local Development**: Explain how to swap the `git` URL in `package.py` to the `file://` URL for local iterative testing.
 
-### Phase 23: Create ParaView Python Algorithm Writer Plugin
+### Phase 23: Create ParaView Python Algorithm Writer Plugin [COMPLETED]
 - [x] **Task 23.1**: Create `scripts/dpvtk_writer_plugin.py` integrating with `paraview.util.vtkAlgorithm`.
   - Define a class inheriting from `VTKPythonAlgorithmBase`.
   - Decorate the class with `@smproxy.writer(name="DPvtkWriter", extensions="dpvtk", file_description="DPvtk Archive", support_reload=False)`.
@@ -434,7 +444,7 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
 - [x] **Task 23.4**: Document execution instructions within `convert_with_plugin.py`:
   - Explicitly document that the script should be run via `mpiexec -np 4 pvbatch --sym scripts/convert_with_plugin.py` to ensure symmetric MPI orchestration still functions seamlessly.
 
-### Phase 24: Unified Converter Cleanup
+### Phase 24: Unified Converter Cleanup [COMPLETED]
 - [x] **Task 24.1**: Rename and Polish `dpvtkconvert.py`.
   - Rename `scripts/convert_with_plugin.py` to `scripts/dpvtkconvert.py`.
   - Introduce `argparse` to handle `--input` (allowing glob patterns) and `--output`.
@@ -445,16 +455,21 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
 - [x] **Task 24.3**: Update Documentation.
   - Scan the repository (including `PLAN.md`) for references to the legacy convert scripts and replace them with `dpvtkconvert.py`.
 
-### Phase 25: Codebase Documentation
+### Phase 25: Codebase Documentation [COMPLETED]
 - [x] **Task 25.1**: Add comprehensive docstrings to the `scripts/` folder.
   - Update all ParaView utility scripts (`dpvtkconvert.py`, `dpvtkscreenshot.py`, `dpvtkanimate.py`, `dpvtkextract.py`, etc.) with module-level, class-level, and function-level docstrings.
   - Ensure docstrings explain the required MPI execution context (e.g., symmetric mode requirements) and VTK pipeline integration.
 - [x] **Task 25.2**: Add comprehensive docstrings to the `pydpvz/` folder.
   - Update the Python wrapper files (`vtk_serializer.py`, etc.) with detailed docstrings explaining the serialization logic, MPI rank chunking, and PyBind11 C++ integration.
 
-### Phase 26: Sphinx / Read the Docs Website Implementation
+### Phase 26: Sphinx / Read the Docs Website Implementation [COMPLETED]
 - [x] **Task 26.1**: Initialize Sphinx documentation in a new `docs/` folder. Configure `conf.py` to use `sphinx_rtd_theme` (for the classic look) and `myst-parser` (for Markdown support).
 - [x] **Task 26.2**: Configure Sphinx `autodoc` by ensuring the compiled `pydpvz` module is in the Sphinx Python path. Add any necessary MPI mocking/stubbing if Sphinx builds the docs in an environment without ParaView/MPI.
 - [x] **Task 26.3**: Write the Core API documentation pages. Create `api.md` that uses `autodoc` directives to automatically extract and format the C++ docstrings from Pybind11 (e.g., `DPvzFile`, `DPvzVtk`, `DPvzMode`).
 - [x] **Task 26.4**: Write Utility and Examples documentation. Integrate existing script usage guides (e.g., `dpvtkscreenshot.py`), CMake, and Spack instructions into structured Markdown pages.
 - [x] **Task 26.5**: Create a GitHub Actions workflow `.github/workflows/docs.yml` that automatically installs dependencies, builds the Sphinx HTML, and deploys it to the `gh-pages` branch whenever code is pushed to `main`.
+
+### Phase 27: Parallel Extent Partitioning & Dataset Hierarchy Preservation [COMPLETED]
+- [x] **Task 27.1**: Fix parallel redundant dataset writing in `DPvtkWriter` plugin by implementing `RequestUpdateExtent` (`UPDATE_PIECE_NUMBER` and `UPDATE_NUMBER_OF_PIECES`) so each MPI rank only writes its local domain piece.
+- [x] **Task 27.2**: Preserve dataset hierarchy and block metadata in `pydpvz.vtk_serializer` via `extract_hierarchy_and_blocks()`, embedding a `<FILE NAME='hierarchy.json'>` metadata record in the archive stream to maintain structure without storing empty partition grids.
+- [x] **Task 27.3**: Update `pydpvz.vtk_deserializer` and all ParaView reading utilities to reconstruct block indices, block names, and non-empty geometries into native `vtkPartitionedDataSetCollection` objects during read operations.

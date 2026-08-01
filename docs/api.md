@@ -19,3 +19,12 @@ This page provides the API reference for the core `pydpvz` C++ extensions and th
    :undoc-members:
    :show-inheritance:
 ```
+
+## VTK Deserializer (`pydpvz.vtk_deserializer`)
+
+```{eval-rst}
+.. automodule:: pydpvz.vtk_deserializer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```

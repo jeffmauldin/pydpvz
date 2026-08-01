@@ -10,13 +10,16 @@ def sample_dpvtk():
     out_file = "test_utils_can.dpvtk"
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     
-    # Ensure it's generated
+    # Ensure it's deleted before generating
+    if os.path.exists(os.path.join(root_dir, out_file)):
+        os.remove(os.path.join(root_dir, out_file))
+        
     cmd = [
         "mpiexec.mpich", "-np", "4",
         "./paraview_v610/bin/pvbatch", "--sym",
-        "scripts/convertvtpcscript1.py",
-        "sample_data/can_data/can_data_4_process_vtpc/can_vtpc_0.vtpc",
-        out_file
+        "scripts/dpvtkconvert.py",
+        "--input", "sample_data/can_data/can_data_4_process_vtpc/can_vtpc_0.vtpc",
+        "--output", out_file
     ]
     # We must source setup_env.sh in bash to get python paths correct, so we use bash -c
     bash_cmd = f"source scripts/setup_env.sh && {' '.join(cmd)}"
@@ -33,8 +36,9 @@ def test_dpvtkextract(sample_dpvtk):
     out_prefix = "extracted_can"
     
     cmd = [
+        "xvfb-run", "-a", "env", "VTK_DEFAULT_OPENGL_WINDOW=vtkXOpenGLRenderWindow",
         "mpiexec.mpich", "-np", "4",
-        "./paraview_v610/bin/pvbatch", "--sym", "--mesa",
+        "./paraview_v610/bin/pvbatch", "--sym",
         "scripts/dpvtkextract.py",
         sample_dpvtk,
         out_prefix
@@ -105,8 +109,9 @@ def test_dpvtkfilter(sample_dpvtk):
     out_filter = "filtered_can.dpvtk"
     
     cmd = [
+        "xvfb-run", "-a", "env", "VTK_DEFAULT_OPENGL_WINDOW=vtkXOpenGLRenderWindow",
         "mpiexec.mpich", "-np", "4",
-        "./paraview_v610/bin/pvbatch", "--sym", "--mesa",
+        "./paraview_v610/bin/pvbatch", "--sym",
         "scripts/dpvtkfilter.py",
         sample_dpvtk, out_filter, "--filter", "slice"
     ]
@@ -145,8 +150,9 @@ def test_dpvtkscreenshot_with_config(sample_dpvtk):
     config_file = "sample_render_config.json"
     
     cmd = [
+        "xvfb-run", "-a", "env", "VTK_DEFAULT_OPENGL_WINDOW=vtkXOpenGLRenderWindow",
         "mpiexec.mpich", "-np", "4",
-        "./paraview_v610/bin/pvbatch", "--sym", "--mesa",
+        "./paraview_v610/bin/pvbatch", "--sym",
         "scripts/dpvtkscreenshot.py",
         sample_dpvtk, out_png, "--config", config_file
     ]

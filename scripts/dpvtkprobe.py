@@ -66,12 +66,14 @@ def probe_dpvtk(filename, timestep=0):
     for w_rank in range(rank, entry.ranks, size):
         rank_entry = step_toc[w_rank]
         buffer_bytes = archive.get_data(rank_entry)
-        datasets = deserialize_vtk_from_buffer(buffer_bytes)
+        items = deserialize_vtk_from_buffer(buffer_bytes)
         
-        for ds in datasets:
-            local_point_arrays.update(get_array_names(ds.GetPointData()))
-            local_cell_arrays.update(get_array_names(ds.GetCellData()))
-            local_field_arrays.update(get_array_names(ds.GetFieldData()))
+        for item in items:
+            ds = item["dataset"]
+            if ds is not None:
+                local_point_arrays.update(get_array_names(ds.GetPointData()))
+                local_cell_arrays.update(get_array_names(ds.GetCellData()))
+                local_field_arrays.update(get_array_names(ds.GetFieldData()))
                 
     # Create custom MPI Op for set union
     set_union_op = MPI.Op.Create(set_union, commute=True)

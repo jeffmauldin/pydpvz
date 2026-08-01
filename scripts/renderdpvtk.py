@@ -30,13 +30,26 @@ def render_dpvtk(filename, output_png):
     
     pdc = vtk.vtkPartitionedDataSetCollection()
     
+    part_counters = {}
     if rank < entry.ranks:
         rank_entry = step_toc[rank]
         buffer_bytes = archive.get_data(rank_entry)
-        datasets = deserialize_vtk_from_buffer(buffer_bytes)
+        items = deserialize_vtk_from_buffer(buffer_bytes)
         
-        for idx, ds in enumerate(datasets):
-            pdc.SetPartition(0, idx, ds)
+        for item in items:
+            idx = item["index"]
+            name = item["name"]
+            ds = item["dataset"]
+            while pdc.GetNumberOfPartitionedDataSets() <= idx:
+                pdc.SetNumberOfPartitionedDataSets(idx + 1)
+            if name:
+                meta = pdc.GetMetaData(idx)
+                if meta:
+                    meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
+            if ds is not None:
+                p_idx = part_counters.get(idx, 0)
+                pdc.SetPartition(idx, p_idx, ds)
+                part_counters[idx] = p_idx + 1
             
     # 2. Push the local VTK dataset into the ParaView pipeline
     # TrivialProducer allows us to bridge raw VTK objects in Python memory 
