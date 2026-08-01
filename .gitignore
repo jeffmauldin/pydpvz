@@ -45,6 +45,7 @@ dpvz/
 scratch_*.py
 test_producer*.py
 test_serialization.py
+usertestdir/
 
 # ==============================================================================
 # Explicit Allowlist for Critical Harness Files (Just to be safe)
