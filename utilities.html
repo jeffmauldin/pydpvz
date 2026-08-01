@@ -46,10 +46,14 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="api.html">pydpvz API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utility Scripts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#converter-utility-dpvtkconvert-py">1. Converter Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkconvert.py</span></code>)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#screenshot-utility-dpvtkscreenshot-py">2. Screenshot Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkscreenshot.py</span></code>)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#animation-utility-dpvtkanimate-py">3. Animation Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkanimate.py</span></code>)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#metadata-inspector-dpvtkinfo-py">4. Metadata Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkinfo.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#universal-converter-dpvtkconvert-py">1. Universal Converter (<code class="docutils literal notranslate"><span class="pre">dpvtkconvert.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#array-probe-inspector-dpvtkprobe-py">2. Array Probe Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkprobe.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#screenshot-utility-dpvtkscreenshot-py">3. Screenshot Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkscreenshot.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#animation-utility-dpvtkanimate-py">4. Animation Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkanimate.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#video-generator-dpvtkvideo-py">5. Video Generator (<code class="docutils literal notranslate"><span class="pre">dpvtkvideo.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parallel-pipeline-filter-dpvtkfilter-py">6. Parallel Pipeline Filter (<code class="docutils literal notranslate"><span class="pre">dpvtkfilter.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dataset-extractor-dpvtkextract-py">7. Dataset Extractor (<code class="docutils literal notranslate"><span class="pre">dpvtkextract.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metadata-inspector-dpvtkinfo-py">8. Metadata Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkinfo.py</span></code>)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="packaging.html">Packaging and Installation</a></li>
@@ -81,37 +85,61 @@
              
   <section id="utility-scripts">
 <h1>Utility Scripts<a class="headerlink" href="#utility-scripts" title="Link to this heading"></a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">pydpvz</span></code> repository includes several Python utility scripts designed to be run within ParaView’s <code class="docutils literal notranslate"><span class="pre">pvbatch</span></code> environment.</p>
-<section id="converter-utility-dpvtkconvert-py">
-<h2>1. Converter Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkconvert.py</span></code>)<a class="headerlink" href="#converter-utility-dpvtkconvert-py" title="Link to this heading"></a></h2>
-<p>Converts standard ParaView formats (<code class="docutils literal notranslate"><span class="pre">.vtpc</span></code>, <code class="docutils literal notranslate"><span class="pre">.ex2</span></code>, <code class="docutils literal notranslate"><span class="pre">.vtm</span></code>) into highly compressed, parallel <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archives.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">pydpvz</span></code> repository includes an expansive suite of Python utility scripts designed to be run within ParaView’s parallel <code class="docutils literal notranslate"><span class="pre">pvbatch</span></code> environment.</p>
+<section id="universal-converter-dpvtkconvert-py">
+<h2>1. Universal Converter (<code class="docutils literal notranslate"><span class="pre">dpvtkconvert.py</span></code>)<a class="headerlink" href="#universal-converter-dpvtkconvert-py" title="Link to this heading"></a></h2>
+<p>Converts standard ParaView file series and simulation datasets (<code class="docutils literal notranslate"><span class="pre">.vtpc</span></code>, <code class="docutils literal notranslate"><span class="pre">.ex2</span></code>, <code class="docutils literal notranslate"><span class="pre">.vtm</span></code>, and <code class="docutils literal notranslate"><span class="pre">.vtu</span></code>) into highly compressed, parallel <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archives.</p>
+<ul class="simple">
+<li><p><strong>Parallel Piece Extents</strong>: Actively synchronizes with upstream VTK pipeline readers (<code class="docutils literal notranslate"><span class="pre">RequestUpdateExtent</span></code>), ensuring each MPI rank requests and serializes only its unique spatial slice of the domain without redundant duplication.</p></li>
+<li><p><strong>Hierarchy Preservation</strong>: Retains complete multi-block dataset structures and component names by embedding a lightweight <code class="docutils literal notranslate"><span class="pre">hierarchy.json</span></code> record into the archive stream.</p></li>
+</ul>
 <p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>pvbatch<span class="w"> </span>--sym<span class="w"> </span>scripts/dpvtkconvert.py<span class="w"> </span>--input<span class="w"> </span>sample_data/can.ex2<span class="w"> </span>--output<span class="w"> </span>output.dpvtk
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>./paraview_v610/bin/pvbatch<span class="w"> </span>--sym<span class="w"> </span>scripts/dpvtkconvert.py<span class="w"> </span>--input<span class="w"> </span>sample_data/can.ex2<span class="w"> </span>--output<span class="w"> </span>output.dpvtk
 </pre></div>
 </div>
-<p><em>Note: Must be run with <code class="docutils literal notranslate"><span class="pre">--sym</span></code> (Symmetric Mode) to avoid MPI deadlocks.</em></p>
+<p><em>Note: Must be run with <code class="docutils literal notranslate"><span class="pre">--sym</span></code> (Symmetric Mode) to ensure collective MPI operations do not deadlock.</em></p>
+</section>
+<section id="array-probe-inspector-dpvtkprobe-py">
+<h2>2. Array Probe Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkprobe.py</span></code>)<a class="headerlink" href="#array-probe-inspector-dpvtkprobe-py" title="Link to this heading"></a></h2>
+<p>Interrogates point, cell, and field data arrays across all timesteps and MPI partitions in a <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archive, performing a collective MPI set union to report global data variables.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>./paraview_v610/bin/pvbatch<span class="w"> </span>--sym<span class="w"> </span>scripts/dpvtkprobe.py<span class="w"> </span>output.dpvtk<span class="w"> </span><span class="m">0</span>
+</pre></div>
+</div>
 </section>
 <section id="screenshot-utility-dpvtkscreenshot-py">
-<h2>2. Screenshot Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkscreenshot.py</span></code>)<a class="headerlink" href="#screenshot-utility-dpvtkscreenshot-py" title="Link to this heading"></a></h2>
-<p>Loads a <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> file, applies a view direction, and renders a <code class="docutils literal notranslate"><span class="pre">.png</span></code> screenshot.</p>
+<h2>3. Screenshot Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkscreenshot.py</span></code>)<a class="headerlink" href="#screenshot-utility-dpvtkscreenshot-py" title="Link to this heading"></a></h2>
+<p>Loads a <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> file, reconstructs multi-block component hierarchies into a <code class="docutils literal notranslate"><span class="pre">vtkPartitionedDataSetCollection</span></code>, applies a camera look vector, and composites a high-resolution <code class="docutils literal notranslate"><span class="pre">.png</span></code> screenshot using parallel rendering.</p>
 <p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./paraview_v610/bin/pvbatch<span class="w"> </span>--mesa<span class="w"> </span>scripts/dpvtkscreenshot.py<span class="w"> </span>output.dpvtk<span class="w"> </span>screenshot.png<span class="w"> </span>--viewdirection<span class="w"> </span><span class="s2">&quot;[0, 0, -1]&quot;</span><span class="w"> </span>--timestep<span class="w"> </span><span class="m">0</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>./paraview_v610/bin/pvbatch<span class="w"> </span>--sym<span class="w"> </span>scripts/dpvtkscreenshot.py<span class="w"> </span>output.dpvtk<span class="w"> </span>screenshot.png<span class="w"> </span>--viewdirection<span class="w"> </span><span class="s2">&quot;[0, 0, -1]&quot;</span><span class="w"> </span>--timestep<span class="w"> </span><span class="m">0</span>
 </pre></div>
 </div>
 </section>
 <section id="animation-utility-dpvtkanimate-py">
-<h2>3. Animation Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkanimate.py</span></code>)<a class="headerlink" href="#animation-utility-dpvtkanimate-py" title="Link to this heading"></a></h2>
-<p>Generates an image sequence for all timesteps in a <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archive.</p>
+<h2>4. Animation Utility (<code class="docutils literal notranslate"><span class="pre">dpvtkanimate.py</span></code>)<a class="headerlink" href="#animation-utility-dpvtkanimate-py" title="Link to this heading"></a></h2>
+<p>Generates an image sequence for all or specified timesteps in a <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archive, writing raw <code class="docutils literal notranslate"><span class="pre">.png</span></code> frames across the cluster.</p>
 <p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./paraview_v610/bin/pvbatch<span class="w"> </span>--mesa<span class="w"> </span>scripts/dpvtkanimate.py<span class="w"> </span>output.dpvtk<span class="w"> </span>frame_base<span class="w"> </span>--timesteprange<span class="w"> </span><span class="s2">&quot;[0, 10]&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>./paraview_v610/bin/pvbatch<span class="w"> </span>--sym<span class="w"> </span>scripts/dpvtkanimate.py<span class="w"> </span>output.dpvtk<span class="w"> </span>frame_base<span class="w"> </span>--timesteprange<span class="w"> </span><span class="s2">&quot;[0, 10]&quot;</span>
 </pre></div>
 </div>
 </section>
+<section id="video-generator-dpvtkvideo-py">
+<h2>5. Video Generator (<code class="docutils literal notranslate"><span class="pre">dpvtkvideo.py</span></code>)<a class="headerlink" href="#video-generator-dpvtkvideo-py" title="Link to this heading"></a></h2>
+<p>Wraps <code class="docutils literal notranslate"><span class="pre">dpvtkanimate.py</span></code> to produce frames in parallel, then seamlessly pipes them into <strong>FFmpeg</strong> on Rank 0 to output a final <code class="docutils literal notranslate"><span class="pre">.mp4</span></code> video file.</p>
+</section>
+<section id="parallel-pipeline-filter-dpvtkfilter-py">
+<h2>6. Parallel Pipeline Filter (<code class="docutils literal notranslate"><span class="pre">dpvtkfilter.py</span></code>)<a class="headerlink" href="#parallel-pipeline-filter-dpvtkfilter-py" title="Link to this heading"></a></h2>
+<p>Applies in-memory ParaView filter algorithms (such as <code class="docutils literal notranslate"><span class="pre">Slice</span></code> or <code class="docutils literal notranslate"><span class="pre">Contour</span></code>) across a distributed <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archive and streams the resulting modified geometries directly into a new compressed <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archive without intermediate files.</p>
+</section>
+<section id="dataset-extractor-dpvtkextract-py">
+<h2>7. Dataset Extractor (<code class="docutils literal notranslate"><span class="pre">dpvtkextract.py</span></code>)<a class="headerlink" href="#dataset-extractor-dpvtkextract-py" title="Link to this heading"></a></h2>
+<p>Unwraps a <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archive back into standard ParaView partitioned dataset collection files (<code class="docutils literal notranslate"><span class="pre">.vtpc</span></code> plus data pieces) for interoperability with external software.</p>
+</section>
 <section id="metadata-inspector-dpvtkinfo-py">
-<h2>4. Metadata Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkinfo.py</span></code>)<a class="headerlink" href="#metadata-inspector-dpvtkinfo-py" title="Link to this heading"></a></h2>
-<p>Inspects a <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archive and prints its TOC metadata extremely quickly without loading the bulk data.</p>
+<h2>8. Metadata Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkinfo.py</span></code>)<a class="headerlink" href="#metadata-inspector-dpvtkinfo-py" title="Link to this heading"></a></h2>
+<p>Reads an archive Table of Contents (TOC), step counts, and rank chunk byte-sizes almost instantaneously without loading bulk mesh data.</p>
 <p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>scripts/dpvtkinfo.py<span class="w"> </span>output.dpvtk
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PYTHONPATH</span><span class="o">=</span>pydpvz<span class="w"> </span>python3<span class="w"> </span>scripts/dpvtkinfo.py<span class="w"> </span>output.dpvtk
 </pre></div>
 </div>
 </section>

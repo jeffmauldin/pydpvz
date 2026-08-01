@@ -95,8 +95,15 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-pydpvz.vtk_serializer">VTK Serializer (<code class="docutils literal notranslate"><span class="pre">pydpvz.vtk_serializer</span></code>)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.convert_pdc_to_multiblock"><code class="docutils literal notranslate"><span class="pre">convert_pdc_to_multiblock()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.convert_to_unstructured_grid"><code class="docutils literal notranslate"><span class="pre">convert_to_unstructured_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.extract_hierarchy_and_blocks"><code class="docutils literal notranslate"><span class="pre">extract_hierarchy_and_blocks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.serialize_dataset_with_hierarchy"><code class="docutils literal notranslate"><span class="pre">serialize_dataset_with_hierarchy()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.serialize_multiblock_dataset"><code class="docutils literal notranslate"><span class="pre">serialize_multiblock_dataset()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_serializer.serialize_partitioned_dataset_collection"><code class="docutils literal notranslate"><span class="pre">serialize_partitioned_dataset_collection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pydpvz.vtk_deserializer">VTK Deserializer (<code class="docutils literal notranslate"><span class="pre">pydpvz.vtk_deserializer</span></code>)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_deserializer.deserialize_vtk_from_buffer"><code class="docutils literal notranslate"><span class="pre">deserialize_vtk_from_buffer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pydpvz.vtk_deserializer.populate_pdc_from_buffer"><code class="docutils literal notranslate"><span class="pre">populate_pdc_from_buffer()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -350,18 +357,34 @@ per rank to the DPvz archive.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_serializer.extract_hierarchy_and_blocks">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">extract_hierarchy_and_blocks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.extract_hierarchy_and_blocks" title="Link to this definition"></a></dt>
+<dd><p>Traverses a VTK dataset (PDC, MultiBlock, or standard DataSet) and extracts 
+its top-level block hierarchy and leaf datasets without merging disjoint blocks.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>list of dict: Each dict contains ‘index’, ‘name’, and ‘dataset’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_serializer.serialize_dataset_with_hierarchy">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">serialize_dataset_with_hierarchy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.serialize_dataset_with_hierarchy" title="Link to this definition"></a></dt>
+<dd><p>Serializes a VTK dataset (composite or single) while preserving block hierarchy.
+Generates a hierarchy JSON summary block along with XML string payloads for non-empty blocks.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="pydpvz.vtk_serializer.serialize_multiblock_dataset">
 <span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">serialize_multiblock_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.serialize_multiblock_dataset" title="Link to this definition"></a></dt>
-<dd><p>Serializes a vtkMultiBlockDataSet to an XML string payload.</p>
-<p>The payload is compressed in-memory using ZLib and wrapped in custom <cite>&lt;FILE NAME=…&gt;</cite> tags 
-that the DPvz C++ reader expects when parsing the archive.</p>
+<dd><p>Serializes a vtkMultiBlockDataSet to an XML string payload while preserving hierarchy.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>mb (vtkMultiBlockDataSet): The dataset to serialize.
 rank (int): The current MPI rank processing the data.
 cycle (int): The current timestep index.
 time (float): The current simulation time.</p>
 </dd>
-<dt>Returns:</dt><dd><p>bytes: The serialized, compressed XML payload.</p>
+<dt>Returns:</dt><dd><p>bytes: The serialized, compressed XML payload with hierarchy metadata.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -369,14 +392,50 @@ time (float): The current simulation time.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="pydpvz.vtk_serializer.serialize_partitioned_dataset_collection">
 <span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_serializer.</span></span><span class="sig-name descname"><span class="pre">serialize_partitioned_dataset_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_serializer.serialize_partitioned_dataset_collection" title="Link to this definition"></a></dt>
-<dd><p>Serializes a vtkPartitionedDataSetCollection to an XML string payload.</p>
+<dd><p>Serializes a vtkPartitionedDataSetCollection to an XML string payload while preserving hierarchy.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>pdc (vtkPartitionedDataSetCollection): The dataset to serialize.
 rank (int): The current MPI rank processing the data.
 cycle (int): The current timestep index.
 time (float): The current simulation time.</p>
 </dd>
-<dt>Returns:</dt><dd><p>bytes: The serialized, compressed XML payload.</p>
+<dt>Returns:</dt><dd><p>bytes: The serialized, compressed XML payload with hierarchy metadata.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-pydpvz.vtk_deserializer">
+<span id="vtk-deserializer-pydpvz-vtk-deserializer"></span><h2>VTK Deserializer (<code class="docutils literal notranslate"><span class="pre">pydpvz.vtk_deserializer</span></code>)<a class="headerlink" href="#module-pydpvz.vtk_deserializer" title="Link to this heading"></a></h2>
+<p>VTK Deserialization module for decoding payloads back into VTK memory objects.</p>
+<p>This module parses the custom <cite>&lt;FILE NAME=…&gt;</cite> XML wrappers generated by <cite>vtk_serializer.py</cite> 
+and extracts the raw VTK XML payloads. It then feeds them back into standard VTK readers 
+(<cite>vtkXMLUnstructuredGridReader</cite>, etc.) instantiated in memory to reconstruct the datasets 
+for ParaView pipeline execution.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_deserializer.deserialize_vtk_from_buffer">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_deserializer.</span></span><span class="sig-name descname"><span class="pre">deserialize_vtk_from_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer_bytes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_deserializer.deserialize_vtk_from_buffer" title="Link to this definition"></a></dt>
+<dd><p>Parses a DPvzVtkData buffer containing multiple <cite>&lt;FILE NAME=’…’&gt;</cite> blocks and 
+optional hierarchy metadata (<cite>&lt;FILE NAME=’hierarchy.json’&gt;</cite>).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>buffer_bytes (bytes): The raw payload extracted from the DPvz archive.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list of dict: Each dictionary contains ‘index’ (int), ‘name’ (str), and ‘dataset’ (vtkDataSet or None).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pydpvz.vtk_deserializer.populate_pdc_from_buffer">
+<span class="sig-prename descclassname"><span class="pre">pydpvz.vtk_deserializer.</span></span><span class="sig-name descname"><span class="pre">populate_pdc_from_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_bytes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">part_counters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pydpvz.vtk_deserializer.populate_pdc_from_buffer" title="Link to this definition"></a></dt>
+<dd><p>Parses a buffer and populates a vtkPartitionedDataSetCollection while maintaining
+the correct block names and partition indices across multiple writing ranks.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>pdc (vtkPartitionedDataSetCollection): Target collection to populate.
+buffer_bytes (bytes): Raw payload from archive.get_data().
+part_counters (dict): Map tracking current partition index per block index.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list of dict: The parsed items returned by deserialize_vtk_from_buffer.</p>
 </dd>
 </dl>
 </dd></dl>
