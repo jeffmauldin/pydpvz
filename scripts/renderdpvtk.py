@@ -7,7 +7,7 @@ import sys
 from mpi4py import MPI
 import paraview.simple as paraview_simple
 import pydpvz
-from pydpvz.vtk_deserializer import deserialize_vtk_from_buffer
+from pydpvz.vtk_deserializer import populate_pdc_from_buffer
 import vtk
 
 def render_dpvtk(filename, output_png):
@@ -34,22 +34,7 @@ def render_dpvtk(filename, output_png):
     if rank < entry.ranks:
         rank_entry = step_toc[rank]
         buffer_bytes = archive.get_data(rank_entry)
-        items = deserialize_vtk_from_buffer(buffer_bytes)
-        
-        for item in items:
-            idx = item["index"]
-            name = item["name"]
-            ds = item["dataset"]
-            while pdc.GetNumberOfPartitionedDataSets() <= idx:
-                pdc.SetNumberOfPartitionedDataSets(idx + 1)
-            if name:
-                meta = pdc.GetMetaData(idx)
-                if meta:
-                    meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
-            if ds is not None:
-                p_idx = part_counters.get(idx, 0)
-                pdc.SetPartition(idx, p_idx, ds)
-                part_counters[idx] = p_idx + 1
+        populate_pdc_from_buffer(pdc, buffer_bytes, part_counters)
             
     # 2. Push the local VTK dataset into the ParaView pipeline
     # TrivialProducer allows us to bridge raw VTK objects in Python memory 

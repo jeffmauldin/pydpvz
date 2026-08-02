@@ -22,13 +22,14 @@ This repository includes a suite of battle-tested Python scripts located in the 
 | **`dpvtkextract.py`** | Parallel extractor that unwraps a `.dpvtk` archive back into raw, standard `.vtpc` and piece files for external tooling. |
 | **`dpvtksplice.py`** | Ultra-fast binary concatenator. Splices multiple `.dpvtk` chunks into a single unified archive purely through raw byte-copying (bypassing VTK entirely). |
 | **`dpvtkdiff.py`** | Performs a metadata and compressed-byte-size rank-by-rank comparison of two `.dpvtk` archives to verify integrity. |
+| **`dpvtkmpiinfo.py`** | Environment inspector. Dynamically queries `pvbatch` and its libraries to deduce its exact **MPI flavor** and **Python ABI version** to ensure compilation compatibility. |
 
 ---
 
 ## 🏛️ Core Architectural Highlights
 
 - **True Parallel Domain Partitioning**: Custom writer plugins (`DPvtkWriter`) actively coordinate with ParaView's streaming pipeline executives via `RequestUpdateExtent`. In multi-process MPI executions, each process sets its piece number and total pieces on upstream filters, ensuring every rank serializes only its partitioned slice of the simulation domain with **zero data duplication**.
-- **Dataset Hierarchy Preservation**: Rather than flattening multi-block (`.vtm`) or partitioned dataset collections (`.vtpc`), `pydpvz` extracts top-level block structures and block names (e.g., separating structural vehicle assemblies or fluid domains), embedding a lightweight `hierarchy.json` record directly into the archive stream. When reading an archive, ParaView natively rebuilds the `vtkPartitionedDataSetCollection` with accurate component hierarchies, even across MPI ranks where specific local blocks contain zero geometry cells.
+- **Dataset Hierarchy & DataAssembly Preservation**: Rather than flattening multi-block (`.vtm`) or partitioned dataset collections (`.vtpc`), `pydpvz` extracts top-level block structures and block names, embedding a lightweight `hierarchy.json` record directly into the archive stream. If a `.vtpc` dataset contains an external **`vtkDataAssembly`** DOM tree (e.g. `Vehicle -> Engine -> Cylinder`), it automatically serializes the XML assembly string directly into the metadata stream. When reading an archive, ParaView natively rebuilds the complete `vtkPartitionedDataSetCollection` and structurally re-attaches the DOM assembly tree exactly as it was, even across MPI ranks where specific local blocks contain zero geometry cells.
 
 ---
 

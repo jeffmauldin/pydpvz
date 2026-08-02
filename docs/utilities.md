@@ -13,12 +13,12 @@ mpiexec -np 4 ./paraview_v610/bin/pvbatch --sym scripts/dpvtkconvert.py --input 
 ```
 *Note: Must be run with `--sym` (Symmetric Mode) to ensure collective MPI operations do not deadlock.*
 
-## 2. Array Probe Inspector (`dpvtkprobe.py`)
-Interrogates point, cell, and field data arrays across all timesteps and MPI partitions in a `.dpvtk` archive, performing a collective MPI set union to report global data variables.
+## 2. Array & Geometry Probe Inspector (`dpvtkprobe.py`)
+Interrogates point, cell, and field data arrays across all timesteps and MPI partitions in a `.dpvtk` archive, performing a collective MPI set union to report global data variables. It also analyzes overall dataset structure, gathering explicit cell and point geometry counts across each writing rank to identify workload distributions.
 
 **Usage:**
 ```bash
-mpiexec -np 4 ./paraview_v610/bin/pvbatch --sym scripts/dpvtkprobe.py output.dpvtk 0
+mpiexec -np 4 ./paraview_v610/bin/pvbatch --sym scripts/dpvtkprobe.py output.dpvtk 0 [--verbose]
 ```
 
 ## 3. Screenshot Utility (`dpvtkscreenshot.py`)
@@ -52,4 +52,12 @@ Reads an archive Table of Contents (TOC), step counts, and rank chunk byte-sizes
 **Usage:**
 ```bash
 PYTHONPATH=pydpvz python3 scripts/dpvtkinfo.py output.dpvtk
+```
+
+## 9. Environment ABI Inspector (`dpvtkmpiinfo.py`)
+Dynamically queries a target `pvbatch` executable and its linked shared objects to deduce its exact **MPI runtime flavor** and **Python major/minor ABI version**. Outputs Spack YAML packages snippets to enforce exact external dependency matching when compiling `pydpvz` on strict HPC clusters.
+
+**Usage:**
+```bash
+python3 scripts/dpvtkmpiinfo.py paraview_v610/bin/pvbatch
 ```

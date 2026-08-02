@@ -20,29 +20,16 @@ This repository contains `pydpvz`, a set of lightweight Python bindings for Sand
    Any utility script that executes collective MPI operations (like `dpvz.write()`) *must* be launched using `pvbatch --sym`. Without `--sym`, ParaView defaults to asymmetric client-server mode, where Python only executes on Rank 0, leaving Ranks 1+ sitting idle in a C++ event loop. This guarantees a permanent MPI deadlock.
 
 3. **Round-Robin Chunk Distribution on Read**:
-   When reading from `.dpvtk` archives, you cannot assume a 1-to-1 mapping between the reading MPI rank and the data block index. Datasets written by `N` ranks might be read by `M` ranks. You **MUST** use a round-robin distribution loop to load chunks:
+   When reading from `.dpvtk` archives, you cannot assume a 1-to-1 mapping between the reading MPI rank and the data block index. Datasets written by `N` ranks might be read by `M` ranks. You **MUST** use a round-robin distribution loop with `populate_pdc_from_buffer` (which handles blocks and automatically reattaches any `vtkDataAssembly` hierarchy):
    ```python
+   from pydpvz.vtk_deserializer import populate_pdc_from_buffer
    part_counters = {}
    for w_rank in range(rank, entry.ranks, size):
        rank_entry = step_toc[w_rank]
        buffer_bytes = archive.get_data(rank_entry)
-       items = deserialize_vtk_from_buffer(buffer_bytes)
-       for item in items:
-           idx = item["index"]
-           name = item["name"]
-           ds = item["dataset"]
-           while pdc.GetNumberOfPartitionedDataSets() <= idx:
-               pdc.SetNumberOfPartitionedDataSets(idx + 1)
-           if name:
-               meta = pdc.GetMetaData(idx)
-               if meta:
-                   meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
-           if ds is not None:
-               p_idx = part_counters.get(idx, 0)
-               pdc.SetPartition(idx, p_idx, ds)
-               part_counters[idx] = p_idx + 1
+       populate_pdc_from_buffer(pdc, buffer_bytes, part_counters)
    ```
-   ParaView will securely and natively composite these disjoint blocks inside the `vtkPartitionedDataSetCollection` while preserving block hierarchy and names.
+   ParaView will securely and natively composite these disjoint blocks inside the `vtkPartitionedDataSetCollection` while preserving block hierarchy, names, and any associated `vtkDataAssembly`.
 
 4. **VTK Pipeline Requirements**:
    When extracting data from ParaView filters (like `Slice`), always use `.GetClientSideObject().GetOutputDataObject(0)`. Do not just use `.GetOutput()`, as some algorithms return `vtkDataObject` instead of `vtkDataSet`, which will crash the serialization logic.
@@ -53,8 +40,13 @@ This repository contains `pydpvz`, a set of lightweight Python bindings for Sand
 6. **Parallel Piece Extent Synchronization (`RequestUpdateExtent`)**:
    When implementing custom VTK writer algorithms or pipeline sinks (such as `DPvtkWriter` in `scripts/dpvtk_writer_plugin.py`), you **MUST** implement `RequestUpdateExtent(self, request, inInfo, outInfo)` to dynamically set `UPDATE_PIECE_NUMBER()` to the local MPI rank and `UPDATE_NUMBER_OF_PIECES()` to the communicator size on upstream executive ports. Without this explicit request, upstream readers default to serial piece requests (piece 0 of 1 on every process), causing every MPI rank to read and write an identical copy of the full dataset into the archive ($N\times$ redundant bloat).
 
-7. **Hierarchical Dataset Preservation & Empty Partitions**:
-   When serializing composite datasets (`vtkMultiBlockDataSet` or `vtkPartitionedDataSetCollection`) to `.dpvtk` archives, never blindly flatten top-level blocks into a single unstructured grid. You must maintain block hierarchy and block names by using `pydpvz.vtk_serializer.extract_hierarchy_and_blocks()`, which embeds a `<FILE NAME='hierarchy.json'>` metadata manifest into each rank's archive stream. In parallel runs, some ranks may own zero geometry cells/points for specific blocks; you must preserve these block entries in `hierarchy.json` without executing or writing empty mesh byte payloads.
+7. **Hierarchical Dataset & DataAssembly Preservation**:
+   When serializing composite datasets (`vtkMultiBlockDataSet` or `vtkPartitionedDataSetCollection`) to `.dpvtk` archives, never blindly flatten top-level blocks into a single unstructured grid. You must maintain block hierarchy and block names by using `pydpvz.vtk_serializer.extract_hierarchy_and_blocks()`, which embeds a `<FILE NAME='hierarchy.json'>` metadata manifest into each rank's archive stream. 
+   - **Empty Partitions**: In parallel runs, some ranks may own zero geometry cells/points for specific blocks; preserve these block entries in `hierarchy.json` without executing or writing empty mesh byte payloads.
+   - **vtkDataAssembly**: If the partitioned dataset collection is paired with an external `vtkDataAssembly` tree, the serializer will automatically serialize its XML representation and embed it in `hierarchy.json` for perfect reconstruction upon reading.
+
+8. **Python ABI Version Matching**:
+   Similar to the MPI constraint, the `pydpvz` pybind11 C++ bindings (`libDPvzMpi.so`) must be compiled against the exact same Python major/minor version (e.g., `3.12`) embedded within ParaView's `pvbatch` interpreter. Compiling `pydpvz` with Python 3.13 and running it inside a Python 3.12 `pvbatch` process will cause immediate segmentation faults or missing symbol errors during `import pydpvz`. Use `scripts/dpvtkmpiinfo.py` to inspect `pvbatch` and determine its exact Python ABI target.
 
 ## How to Proceed
 If the user has asked you to add a new feature or utility:

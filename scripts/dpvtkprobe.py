@@ -62,12 +62,16 @@ def probe_dpvtk(filename, timestep=0):
     local_point_arrays = set()
     local_cell_arrays = set()
     local_field_arrays = set()
+    local_counts = {}
     
     for w_rank in range(rank, entry.ranks, size):
         rank_entry = step_toc[w_rank]
         buffer_bytes = archive.get_data(rank_entry)
         items = deserialize_vtk_from_buffer(buffer_bytes)
         
+        if w_rank not in local_counts:
+            local_counts[w_rank] = {'points': 0, 'cells': 0}
+            
         for item in items:
             ds = item["dataset"]
             if ds is not None:
@@ -75,25 +79,59 @@ def probe_dpvtk(filename, timestep=0):
                 local_cell_arrays.update(get_array_names(ds.GetCellData()))
                 local_field_arrays.update(get_array_names(ds.GetFieldData()))
                 
+                local_counts[w_rank]['points'] += ds.GetNumberOfPoints()
+                local_counts[w_rank]['cells'] += ds.GetNumberOfCells()
+                
     # Create custom MPI Op for set union
     set_union_op = MPI.Op.Create(set_union, commute=True)
     
     global_point_arrays = comm.reduce(local_point_arrays, op=set_union_op, root=0)
     global_cell_arrays = comm.reduce(local_cell_arrays, op=set_union_op, root=0)
     global_field_arrays = comm.reduce(local_field_arrays, op=set_union_op, root=0)
-    
     set_union_op.Free()
     
+    # Gather rank counts
+    gathered_counts = comm.gather(local_counts, root=0)
+    
     if rank == 0:
+        global_counts = {}
+        for gc in gathered_counts:
+            global_counts.update(gc)
+            
+        total_points = sum(c['points'] for c in global_counts.values())
+        total_cells = sum(c['cells'] for c in global_counts.values())
+        
         print(f"\n--- DPvz Probe: {filename} (Timestep {timestep}) ---")
-        print(f"Point Data Arrays : {list(global_point_arrays) if global_point_arrays else 'None'}")
-        print(f"Cell Data Arrays  : {list(global_cell_arrays) if global_cell_arrays else 'None'}")
-        print(f"Field Data Arrays : {list(global_field_arrays) if global_field_arrays else 'None'}\n")
+        
+        print(f"\nGlobal Dataset Structure:")
+        print(f"  Total Points : {total_points:,}")
+        print(f"  Total Cells  : {total_cells:,}")
+        
+        print(f"\nPer-Rank Breakdown ({entry.ranks} original writing ranks):")
+        
+        # We print all ranks if <= 16 or verbose is enabled
+        if entry.ranks <= 16 or args.verbose:
+            for r in range(entry.ranks):
+                pts = global_counts.get(r, {}).get('points', 0)
+                cls = global_counts.get(r, {}).get('cells', 0)
+                print(f"  Rank {r:3d}: {pts:10,} pts, {cls:10,} cls")
+        else:
+            pt_list = [c['points'] for c in global_counts.values()]
+            cl_list = [c['cells'] for c in global_counts.values()]
+            print(f"  (Output truncated. Use --verbose to see all {entry.ranks} ranks)")
+            print(f"  Points per Rank -> Min: {min(pt_list):,}, Max: {max(pt_list):,}, Avg: {int(sum(pt_list)/len(pt_list)):,}")
+            print(f"  Cells per Rank  -> Min: {min(cl_list):,}, Max: {max(cl_list):,}, Avg: {int(sum(cl_list)/len(cl_list)):,}")
+            
+        print(f"\nData Arrays:")
+        print(f"  Point Data : {list(global_point_arrays) if global_point_arrays else 'None'}")
+        print(f"  Cell Data  : {list(global_cell_arrays) if global_cell_arrays else 'None'}")
+        print(f"  Field Data : {list(global_field_arrays) if global_field_arrays else 'None'}\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Probe a .dpvtk archive for available data arrays.")
     parser.add_argument("input", help="Input .dpvtk file")
     parser.add_argument("--timestep", type=int, default=0, help="Timestep index to probe (defaults to 0).")
+    parser.add_argument("--verbose", action="store_true", help="Print complete output including massive rank count lists.")
     
     # Use parse_known_args in case it's run via pvbatch
     args, unknown = parser.parse_known_args()

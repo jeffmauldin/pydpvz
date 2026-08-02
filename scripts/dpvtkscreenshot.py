@@ -17,7 +17,7 @@ import json
 from mpi4py import MPI
 import paraview.simple as paraview_simple
 import pydpvz
-from pydpvz.vtk_deserializer import deserialize_vtk_from_buffer
+from pydpvz.vtk_deserializer import populate_pdc_from_buffer
 import vtk
 
 def render_dpvtk(filename, output_png, view_direction=None, timestep=0, config_path=None):
@@ -63,22 +63,7 @@ def render_dpvtk(filename, output_png, view_direction=None, timestep=0, config_p
     for w_rank in range(rank, entry.ranks, size):
         rank_entry = step_toc[w_rank]
         buffer_bytes = archive.get_data(rank_entry)
-        items = deserialize_vtk_from_buffer(buffer_bytes)
-        
-        for item in items:
-            idx = item["index"]
-            name = item["name"]
-            ds = item["dataset"]
-            while pdc.GetNumberOfPartitionedDataSets() <= idx:
-                pdc.SetNumberOfPartitionedDataSets(idx + 1)
-            if name:
-                meta = pdc.GetMetaData(idx)
-                if meta:
-                    meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
-            if ds is not None:
-                p_idx = part_counters.get(idx, 0)
-                pdc.SetPartition(idx, p_idx, ds)
-                part_counters[idx] = p_idx + 1
+        populate_pdc_from_buffer(pdc, buffer_bytes, part_counters)
             
     if rank == 0:
         print(f"completed read of {filename} at timestep {timestep}")

@@ -175,7 +175,46 @@ def test_dpvtkprobe(sample_dpvtk):
     
     # Verify expected structure is in the standard output
     assert "--- DPvz Probe" in result.stdout
-    assert "Point Data Arrays" in result.stdout
-    assert "Cell Data Arrays" in result.stdout
-    assert "Field Data Arrays" in result.stdout
+    assert "Point Data " in result.stdout
+    assert "Cell Data " in result.stdout
+    assert "Field Data " in result.stdout
 
+
+def test_data_assembly_roundtrip(sample_dpvtk):
+    """
+    Verifies that vtkDataAssembly hierarchies are preserved when serialized 
+    and deserialized from a .dpvtk archive.
+    """
+    root_dir = os.path.dirname(sample_dpvtk)
+    
+    # We run a one-liner via pvbatch to load the archive using pydpvz 
+    # and assert that the vtkDataAssembly is restored successfully.
+    python_script = f"""
+import paraview.simple as pvs
+import pydpvz
+from pydpvz.vtk_deserializer import populate_pdc_from_buffer
+from mpi4py import MPI
+from paraview import vtk
+r = pydpvz.DPvzVtk('{sample_dpvtk}', pydpvz.DPvzMode.DPvzReadOnly, MPI.COMM_WORLD, False)
+map_vec = r.get_map()
+step_toc = r.get_step_toc(map_vec[0])
+buffer_bytes = r.get_data(step_toc[0])
+
+pdc = vtk.vtkPartitionedDataSetCollection()
+populate_pdc_from_buffer(pdc, buffer_bytes, {{}})
+
+asm = pdc.GetDataAssembly()
+if asm is None:
+    print('ASSEMBLY_MISSING')
+else:
+    print('ASSEMBLY_ROOT:' + str(asm.GetRootNodeName()))
+"""
+    cmd = [
+        "mpiexec.mpich", "-np", "1",
+        "./paraview_v610/bin/pvbatch", "-c", f'"{python_script.strip()}"'
+    ]
+    bash_cmd = f"source scripts/setup_env.sh && {' '.join(cmd)}"
+    result = subprocess.run(["bash", "-c", bash_cmd], cwd=root_dir, check=True, capture_output=True, text=True)
+    
+    # Assert the root node 'IOSS' was preserved
+    assert "ASSEMBLY_ROOT:IOSS" in result.stdout

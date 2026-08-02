@@ -7,7 +7,7 @@ import sys
 import paraview.simple as paraview_simple
 from mpi4py import MPI
 import pydpvz
-from pydpvz.vtk_deserializer import deserialize_vtk_from_buffer
+from pydpvz.vtk_deserializer import populate_pdc_from_buffer
 import vtk
 
 def read_dpvtk(filename):
@@ -41,27 +41,10 @@ def read_dpvtk(filename):
             # Extract raw bytes (the VTK XML streams with <FILE NAME> headers)
             buffer_bytes = archive.get_data(rank_entry)
             
-            # Deserialize into VTK objects
-            items = deserialize_vtk_from_buffer(buffer_bytes)
-            print(f"[{rank}] Deserialized {len(items)} items from buffer.")
-            
             # Put them into a vtkPartitionedDataSetCollection for ParaView pipeline
             pdc = vtk.vtkPartitionedDataSetCollection()
             part_counters = {}
-            for item in items:
-                idx = item["index"]
-                name = item["name"]
-                ds = item["dataset"]
-                while pdc.GetNumberOfPartitionedDataSets() <= idx:
-                    pdc.SetNumberOfPartitionedDataSets(idx + 1)
-                if name:
-                    meta = pdc.GetMetaData(idx)
-                    if meta:
-                        meta.Set(vtk.vtkCompositeDataSet.NAME(), name)
-                if ds is not None:
-                    p_idx = part_counters.get(idx, 0)
-                    pdc.SetPartition(idx, p_idx, ds)
-                    part_counters[idx] = p_idx + 1
+            items = populate_pdc_from_buffer(pdc, buffer_bytes, part_counters)
                 
             print(f"[{rank}] Successfully loaded {len(items)} partitions for cycle {entry.cycle}.")
         else:

@@ -135,6 +135,12 @@ def serialize_dataset_with_hierarchy(dataset, rank=0, cycle=0, time=0.0):
     blocks = extract_hierarchy_and_blocks(dataset)
     
     hierarchy_info = {"blocks": []}
+    
+    if dataset.IsA("vtkPartitionedDataSetCollection"):
+        asm = dataset.GetDataAssembly()
+        if asm:
+            hierarchy_info["data_assembly_xml"] = asm.SerializeToXML(vtk.vtkIndent())
+            
     data_payloads = []
     
     for blk in blocks:

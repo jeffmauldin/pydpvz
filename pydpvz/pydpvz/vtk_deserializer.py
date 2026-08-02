@@ -49,7 +49,11 @@ def deserialize_vtk_from_buffer(buffer_bytes):
                     reader.SetInputString(data)
                     reader.Update()
                     ds = reader.GetOutput()
-                results.append({"index": idx, "name": name, "dataset": ds})
+                results.append({"type": "block", "index": idx, "name": name, "dataset": ds})
+                
+            if "data_assembly_xml" in meta:
+                results.append({"type": "assembly", "index": -1, "name": "__assembly__", "dataset": None, "xml": meta["data_assembly_xml"]})
+                
             return results
         except Exception:
             pass
@@ -70,7 +74,7 @@ def deserialize_vtk_from_buffer(buffer_bytes):
         reader.Update()
         ds = reader.GetOutput()
         if ds:
-            results.append({"index": 0, "name": "block_0", "dataset": ds})
+            results.append({"type": "block", "index": 0, "name": "block_0", "dataset": ds})
             idx += 1
             
     return results
@@ -91,9 +95,20 @@ def populate_pdc_from_buffer(pdc, buffer_bytes, part_counters):
     """
     items = deserialize_vtk_from_buffer(buffer_bytes)
     for item in items:
-        idx = item["index"]
-        name = item["name"]
-        ds = item["dataset"]
+        if item.get("type") == "assembly":
+            # Only initialize and set the assembly if we haven't already 
+            # (since every rank might stream the identical assembly)
+            if not pdc.GetDataAssembly():
+                asm = vtk.vtkDataAssembly()
+                asm.InitializeFromXML(item["xml"])
+                pdc.SetDataAssembly(asm)
+            continue
+            
+        # Standard block item processing
+        idx = item.get("index", 0)
+        name = item.get("name", "")
+        ds = item.get("dataset", None)
+        
         while pdc.GetNumberOfPartitionedDataSets() <= idx:
             pdc.SetNumberOfPartitionedDataSets(idx + 1)
         if name:
@@ -104,4 +119,5 @@ def populate_pdc_from_buffer(pdc, buffer_bytes, part_counters):
             p_idx = part_counters.get(idx, 0)
             pdc.SetPartition(idx, p_idx, ds)
             part_counters[idx] = p_idx + 1
+            
     return items
