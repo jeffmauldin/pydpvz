@@ -55,6 +55,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#dataset-extractor-dpvtkextract-py">7. Dataset Extractor (<code class="docutils literal notranslate"><span class="pre">dpvtkextract.py</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#metadata-inspector-dpvtkinfo-py">8. Metadata Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkinfo.py</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#environment-abi-inspector-dpvtkmpiinfo-py">9. Environment ABI Inspector (<code class="docutils literal notranslate"><span class="pre">dpvtkmpiinfo.py</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#paraview-python-plugins-dpvtk-reader-plugin-py-dpvtk-writer-plugin-py">10. ParaView Python Plugins (<code class="docutils literal notranslate"><span class="pre">dpvtk_reader_plugin.py</span></code> &amp; <code class="docutils literal notranslate"><span class="pre">dpvtk_writer_plugin.py</span></code>)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="packaging.html">Packaging and Installation</a></li>
@@ -151,6 +152,22 @@
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>scripts/dpvtkmpiinfo.py<span class="w"> </span>paraview_v610/bin/pvbatch
 </pre></div>
 </div>
+</section>
+<section id="paraview-python-plugins-dpvtk-reader-plugin-py-dpvtk-writer-plugin-py">
+<h2>10. ParaView Python Plugins (<code class="docutils literal notranslate"><span class="pre">dpvtk_reader_plugin.py</span></code> &amp; <code class="docutils literal notranslate"><span class="pre">dpvtk_writer_plugin.py</span></code>)<a class="headerlink" href="#paraview-python-plugins-dpvtk-reader-plugin-py-dpvtk-writer-plugin-py" title="Link to this heading"></a></h2>
+<p>Native <code class="docutils literal notranslate"><span class="pre">VTKPythonAlgorithmBase</span></code> ServerManager proxy plugins that allow ParaView to load, view, and save <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archives directly in interactive GUI workflows (<code class="docutils literal notranslate"><span class="pre">pvserver</span></code> / ParaView GUI client) or batch Python pipelines (<code class="docutils literal notranslate"><span class="pre">pvpython</span></code> / <code class="docutils literal notranslate"><span class="pre">pvbatch</span></code>).</p>
+<ul class="simple">
+<li><p><strong>DPvtkReader</strong>: Binds seamlessly to ParaView’s standard <strong>File -&gt; Open</strong> dialogs for <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> files. Advertises simulation timestamps to unlock the interactive Time Slider, and utilizes round-robin collective reads to restore geometry blocks and <code class="docutils literal notranslate"><span class="pre">vtkDataAssembly</span></code> hierarchies.</p></li>
+<li><p><strong>DPvtkWriter</strong>: Binds to <strong>File -&gt; Save Data</strong> pipelines, coordinating piece extent requests to stream parallel VTK datasets into compressed <code class="docutils literal notranslate"><span class="pre">.dpvtk</span></code> archives without duplicate rank writes.</p></li>
+</ul>
+<p><strong>GUI / Script Loading:</strong>
+In ParaView Python scripts or Python Shell:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">paraview.simple</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pvs</span>
+<span class="n">pvs</span><span class="o">.</span><span class="n">LoadPlugin</span><span class="p">(</span><span class="s2">&quot;scripts/dpvtk_reader_plugin.py&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="o">=</span><span class="nb">globals</span><span class="p">())</span>
+<span class="n">reader</span> <span class="o">=</span> <span class="n">pvs</span><span class="o">.</span><span class="n">OpenDataFile</span><span class="p">(</span><span class="s2">&quot;output.dpvtk&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the ParaView GUI: Go to <strong>Tools -&gt; Manage Plugins -&gt; Load New Plugin</strong> and select <code class="docutils literal notranslate"><span class="pre">dpvtk_reader_plugin.py</span></code> or <code class="docutils literal notranslate"><span class="pre">dpvtk_writer_plugin.py</span></code>.</p>
 </section>
 </section>
 
