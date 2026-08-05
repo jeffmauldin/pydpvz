@@ -218,3 +218,30 @@ else:
     
     # Assert the root node 'IOSS' was preserved
     assert "ASSEMBLY_ROOT:IOSS" in result.stdout
+
+
+def test_reader_plugin(sample_dpvtk):
+    """
+    Verifies that the DPvtkReader ParaView Python algorithm plugin can natively read
+    a .dpvtk archive inside a symmetric MPI pvbatch session.
+    """
+    root_dir = os.path.dirname(sample_dpvtk)
+    plugin_path = os.path.join(root_dir, "scripts", "dpvtk_reader_plugin.py")
+    
+    python_script = f"""
+import paraview.simple as pvs
+pvs.LoadPlugin('{plugin_path}', ns=globals())
+reader = pvs.OpenDataFile('{sample_dpvtk}')
+pvs.UpdatePipeline()
+info = reader.GetDataInformation()
+print('READER_TEST_CELLS:' + str(info.GetNumberOfCells()))
+"""
+    cmd = [
+        "mpiexec.mpich", "-np", "4",
+        "./paraview_v610/bin/pvbatch", "--sym", "-c", f'"{python_script.strip()}"'
+    ]
+    bash_cmd = f"source scripts/setup_env.sh && {' '.join(cmd)}"
+    result = subprocess.run(["bash", "-c", bash_cmd], cwd=root_dir, check=True, capture_output=True, text=True)
+    
+    assert "READER_TEST_CELLS:" in result.stdout
+    assert "DPvtkReader Plugin is being parsed by ParaView!" in result.stdout

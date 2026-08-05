@@ -1,0 +1,22 @@
+<ServerManagerConfiguration>
+  <ProxyGroup name="writers">
+    <WriterProxy group="writers" si_class="vtkSIPythonSourceProxy" name="DPvtkWriter" class="scripts.dpvtk_writer_plugin.DPvtkWriter" label="DPvtkWriter">
+      <InputProperty command="SetInputConnection" name="Input" port_index="0">
+        <DataTypeDomain name="input_type" composite_data_supported="1">
+          <DataType value="vtkPartitionedDataSetCollection" />
+          <DataType value="vtkMultiBlockDataSet" />
+          <DataType value="vtkDataSet" />
+        </DataTypeDomain>
+      </InputProperty>
+      <IntVectorProperty name="WriteAllTimeSteps" default_values="0" command="SetWriteAllTimeSteps" number_of_elements="1">
+        <BooleanDomain name="bool" />
+      </IntVectorProperty>
+      <StringVectorProperty name="FileName" panel_visibility="never" command="SetFileName" number_of_elements="1" default_values="None">
+        <FileListDomain name="files" />
+      </StringVectorProperty>
+      <Hints>
+        <WriterFactory file_description="DPvtk Archive" extensions="dpvtk" />
+      </Hints>
+    </WriterProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>

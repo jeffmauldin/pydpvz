@@ -61,3 +61,17 @@ Dynamically queries a target `pvbatch` executable and its linked shared objects 
 ```bash
 python3 scripts/dpvtkmpiinfo.py paraview_v610/bin/pvbatch
 ```
+
+## 10. ParaView Python Plugins (`dpvtk_reader_plugin.py` & `dpvtk_writer_plugin.py`)
+Native `VTKPythonAlgorithmBase` ServerManager proxy plugins that allow ParaView to load, view, and save `.dpvtk` archives directly in interactive GUI workflows (`pvserver` / ParaView GUI client) or batch Python pipelines (`pvpython` / `pvbatch`).
+- **DPvtkReader**: Binds seamlessly to ParaView's standard **File -> Open** dialogs for `.dpvtk` files. Advertises simulation timestamps to unlock the interactive Time Slider, and utilizes round-robin collective reads to restore geometry blocks and `vtkDataAssembly` hierarchies.
+- **DPvtkWriter**: Binds to **File -> Save Data** pipelines, coordinating piece extent requests to stream parallel VTK datasets into compressed `.dpvtk` archives without duplicate rank writes.
+
+**GUI / Script Loading:**
+In ParaView Python scripts or Python Shell:
+```python
+import paraview.simple as pvs
+pvs.LoadPlugin("scripts/dpvtk_reader_plugin.py", ns=globals())
+reader = pvs.OpenDataFile("output.dpvtk")
+```
+In the ParaView GUI: Go to **Tools -> Manage Plugins -> Load New Plugin** and select `dpvtk_reader_plugin.py` or `dpvtk_writer_plugin.py`.

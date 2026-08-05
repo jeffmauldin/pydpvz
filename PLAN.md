@@ -473,3 +473,16 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
 - [x] **Task 27.1**: Fix parallel redundant dataset writing in `DPvtkWriter` plugin by implementing `RequestUpdateExtent` (`UPDATE_PIECE_NUMBER` and `UPDATE_NUMBER_OF_PIECES`) so each MPI rank only writes its local domain piece.
 - [x] **Task 27.2**: Preserve dataset hierarchy and block metadata in `pydpvz.vtk_serializer` via `extract_hierarchy_and_blocks()`, embedding a `<FILE NAME='hierarchy.json'>` metadata record in the archive stream to maintain structure without storing empty partition grids.
 - [x] **Task 27.3**: Update `pydpvz.vtk_deserializer` and all ParaView reading utilities to reconstruct block indices, block names, and non-empty geometries into native `vtkPartitionedDataSetCollection` objects during read operations.
+
+### Phase 28: vtkDataAssembly Hierarchy Preservation & Environment ABI Inspection [COMPLETED]
+- [x] **Task 28.1**: Expand `pydpvz.vtk_serializer` and `pydpvz.vtk_deserializer` (`populate_pdc_from_buffer`) to capture and restore the full XML representation of any external `vtkDataAssembly` tree attached to composite datasets.
+- [x] **Task 28.2**: Modernize all reading utilities (`dpvtkextract.py`, `dpvtkscreenshot.py`, etc.) to invoke `populate_pdc_from_buffer`, guaranteeing unified hierarchy and assembly recovery without manual loop indexing errors.
+- [x] **Task 28.3**: Expand `scripts/dpvtkmpiinfo.py` to inspect `pvbatch` binaries and linked shared libraries to determine both the MPI runtime flavor and the exact Python major/minor ABI version embedded within ParaView.
+
+### Phase 29: Create ParaView Python Algorithm Reader Plugin [COMPLETED]
+- [x] **Task 29.1**: Create `scripts/dpvtk_reader_plugin.py` using `paraview.util.vtkAlgorithm`.
+  - Implement a `VTKPythonAlgorithmBase` reader subclass decorated with `@smproxy.reader` to bind to ParaView's **File -> Open** filechooser dialog for `.dpvtk` archives.
+  - Implement `RequestInformation` to query archive time map vectors and populate ParaView's streaming pipeline executive (`TIME_STEPS` and `TIME_RANGE`) to activate interactive GUI time sliders.
+  - Implement `RequestData` to execute collective round-robin data extraction across all MPI ranks using `populate_pdc_from_buffer`, restoring partitioned simulation geometry and `vtkDataAssembly` component trees natively in memory.
+- [x] **Task 29.2**: Add parallel automated verification testing (`test_reader_plugin`) to `scripts/tests/test_utilities.py` to ensure robust CI validation.
+- [x] **Task 29.3**: Document GUI & Remote Client-Server execution workflows across `AGENTS.md`, `README.md`, and `docs/utilities.md`, ensuring HPC users know to load the reader plugin under **Remote Plugins** when connecting local desktops to remote `pvserver` cluster sessions.

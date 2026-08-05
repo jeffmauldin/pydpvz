@@ -48,6 +48,11 @@ This repository contains `pydpvz`, a set of lightweight Python bindings for Sand
 8. **Python ABI Version Matching**:
    Similar to the MPI constraint, the `pydpvz` pybind11 C++ bindings (`libDPvzMpi.so`) must be compiled against the exact same Python major/minor version (e.g., `3.12`) embedded within ParaView's `pvbatch` interpreter. Compiling `pydpvz` with Python 3.13 and running it inside a Python 3.12 `pvbatch` process will cause immediate segmentation faults or missing symbol errors during `import pydpvz`. Use `scripts/dpvtkmpiinfo.py` to inspect `pvbatch` and determine its exact Python ABI target.
 
+9. **ParaView Python Algorithm Plugins (GUI vs Batch Mode & Client-Server Architecture)**:
+   When utilizing ParaView Python plugins (`VTKPythonAlgorithmBase` decorated with `@smproxy.reader` / `@smproxy.writer` in `scripts/dpvtk_reader_plugin.py` and `scripts/dpvtk_writer_plugin.py`):
+   - **Reader Plugin (`dpvtk_reader_plugin.py`)**: Seamlessly integrates with ParaView's **File -> Open** dialog out-of-the-box via `@smproxy.reader` and `@smhint.filechooser`. In remote client-server workflows (`pvserver`), load the plugin exclusively under **Remote Plugins** via **Tools -> Manage Plugins...**. This ensures all `pydpvz`/`mpi4py` operations execute on the server container/cluster while ParaView automatically sends the Server Manager GUI proxy definitions over the network to your local laptop client. Do not load under Local Plugins unless `pydpvz` is natively built on the client machine.
+   - **Writer Plugin (`dpvtk_writer_plugin.py`)**: While `@smproxy.writer` works perfectly in scripted Python execution (`pvbatch` / `pvpython` via `paraview.simple.SaveData()`), modern ParaView Qt GUI client interfaces for **Save Data** (`pqSaveDataReaction`) often require compiled C++ GUI client plugins or static ServerManager configuration to populate export drop-downs in interactive sessions. Therefore, rely on scripted batch execution or Python shell scripts when invoking `DPvtkWriter`.
+
 ## How to Proceed
 If the user has asked you to add a new feature or utility:
 1. Check `PLAN.md` to see if a similar phase already exists.

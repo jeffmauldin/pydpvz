@@ -1,0 +1,8 @@
+{
+    "color_by": {
+        "association": "CELLS",
+        "array_name": "EQPS",
+        "range_min": 0.0,
+        "range_max": 1.5
+    }
+}

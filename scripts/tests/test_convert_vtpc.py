@@ -12,9 +12,9 @@ def test_convert_can_exodus():
     cmd = [
         "mpiexec.mpich", "-np", "4", 
         "./paraview_v610/bin/pvbatch", "--sym", 
-        "scripts/convertvtpcscript1.py", 
-        "sample_data/can_data/can_data_4_process_exodus/can.ex2.4.0", 
-        "output_can_ex.dpvtk"
+        "scripts/dpvtkconvert.py", 
+        "--input", "sample_data/can_data/can_data_4_process_exodus/can.ex2.4.0", 
+        "--output", "output_can_ex.dpvtk"
     ]
     
     result = subprocess.run(cmd, env=env, cwd="/workspaces/AllVibesDemo", capture_output=True, text=True)
@@ -36,9 +36,10 @@ def test_convert_can_vtpc():
     cmd = [
         "mpiexec.mpich", "-np", "4", 
         "./paraview_v610/bin/pvbatch", "--sym", 
-        "scripts/convertvtpcscript1.py"
+        "scripts/dpvtkconvert.py",
+        "--input"
     ] + input_files + [
-        "output_can_vtpc.dpvtk"
+        "--output", "output_can_vtpc.dpvtk"
     ]
     
     result = subprocess.run(cmd, env=env, cwd="/workspaces/AllVibesDemo", capture_output=True, text=True)
@@ -56,9 +57,9 @@ def test_convert_hifire_vtpc():
     cmd = [
         "mpiexec.mpich", "-np", "4", 
         "./paraview_v610/bin/pvbatch", "--sym", 
-        "scripts/convertvtpcscript1.py", 
-        "sample_data/hifire_example_data/hifire_volume_0001.vtpc", 
-        "output_hifire.dpvtk"
+        "scripts/dpvtkconvert.py", 
+        "--input", "sample_data/hifire_example_data/hifire_volume_0001.vtpc", 
+        "--output", "output_hifire.dpvtk"
     ]
     
     result = subprocess.run(cmd, env=env, cwd="/workspaces/AllVibesDemo", capture_output=True, text=True)
