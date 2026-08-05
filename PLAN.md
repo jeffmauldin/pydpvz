@@ -322,19 +322,20 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
 * If OpenMPI: Use `mpicxx.openmpi` and `mpicc.openmpi`.
 *(The examples below assume MPICH. Adjust accordingly!)*
 
-1. **Clone Core C++ Repository & Build Parallel Library**:
+1. **Clone Core C++ Repository & Build Parallel Library via CMake**:
+   Note: Upstream `dpvz` omits internal test directories (`tests/mpi`, `tests/ser`) in its public repo. To build cleanly with CMake without crashing on those missing directories, pass `-DDPVZ_TEST_MPI=OFF -DDPVZ_TEST_SERIAL=OFF`:
    ```bash
    git clone https://github.com/sandialabs/dpvz.git dpvz
-   cd dpvz/src
-   # Compile with the correct wrapper (e.g., mpicxx.mpich) to match ParaView
-   mpicxx.mpich -DDPVZ_MPI -Wall -O3 -shared -fPIC -o libDPvzMpi.so *.C -lz
-   # Also compile the archive utility for verification
-   mpicxx.mpich -DDPVZ_MPI -Wall -O3 -o ../utils/dpvtk-ar-ser ../utils/dpvtk-ar.C -L. -lDPvzMpi -lz
+   cd dpvz
+   # Configure with CMake with test targets disabled and appropriate MPI compilers
+   cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DDPVZ_MPI=ON -DDPVZ_SERIAL=OFF -DDPVZ_TEST_MPI=OFF -DDPVZ_TEST_SERIAL=OFF -DMPI_C_COMPILER=mpicc.mpich -DMPI_CXX_COMPILER=mpicxx.mpich
+   # Build parallel library
+   cmake --build build -j
    ```
 
 2. **Setup Standalone `pydpvz` Package & Run Package Unit Tests**:
    ```bash
-   cd ../../pydpvz
+   cd ../pydpvz
    # Ensure CC/CXX point to the correct MPI wrapper to prevent mixing
    CC=mpicc.mpich CXX=mpicxx.mpich pip install -e .
    pytest tests/test_serial_io.py

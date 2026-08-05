@@ -56,19 +56,31 @@ To recreate this environment on your own cluster or container, you must build `d
    ```
    *At the end of the script, it will scan `pvbatch` and tell you whether to use `mpicxx.mpich` or `mpicxx.openmpi` in the following steps.*
 
-2. **Build the C++ Core (`dpvz`)**:
+2. **Build the C++ Core (`dpvz`) via CMake**:
+   When cloning Sandia's public `dpvz` repository, note that the upstream repo omits its internal test suite directories (`tests/mpi` and `tests/ser`). Running their built-in `./build-cmake.sh` or `./build.sh` scripts directly will fail when trying to enter those missing directories.
+   
+   To build cleanly with standard CMake, simply disable those test targets (`-DDPVZ_TEST_MPI=OFF -DDPVZ_TEST_SERIAL=OFF`) and pass your target MPI compilers:
    ```bash
    git clone https://github.com/sandialabs/dpvz.git dpvz
-   cd dpvz/src
+   cd dpvz
    
-   # Use the MPI wrapper detected in Step 1 (e.g., mpicxx.mpich)
-   mpicxx.mpich -DDPVZ_MPI -Wall -O3 -shared -fPIC -o libDPvzMpi.so *.C -lz
-   mpicxx.mpich -DDPVZ_MPI -Wall -O3 -o ../utils/dpvtk-ar-ser ../utils/dpvtk-ar.C -L. -lDPvzMpi -lz
+   # Configure using CMake with test suite targets disabled
+   cmake -B build -S . \
+       -DCMAKE_BUILD_TYPE=Release \
+       -DDPVZ_MPI=ON -DDPVZ_SERIAL=OFF \
+       -DDPVZ_TEST_MPI=OFF -DDPVZ_TEST_SERIAL=OFF \
+       -DMPI_C_COMPILER=mpicc.mpich \
+       -DMPI_CXX_COMPILER=mpicxx.mpich
+       
+   # Build the parallel library (libDPvzMpi.a)
+   cmake --build build -j
    ```
+   *(Note: Adjust `mpicc.mpich`/`mpicxx.mpich` to match the MPI flavor detected in Step 1, such as `mpicxx.openmpi` or `mpicxx` after running `module load mpi` on your HPC).*
 
 3. **Install the Python Wrappers (`pydpvz`)**:
+   *Note: The Python wrappers natively compile the required `dpvz` C++ sources directly into the extension module during build.*
    ```bash
-   cd ../../pydpvz
+   cd ../pydpvz
    
    # Export the same MPI wrappers
    CC=mpicc.mpich CXX=mpicxx.mpich pip install -e .
