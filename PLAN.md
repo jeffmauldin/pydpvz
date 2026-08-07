@@ -487,3 +487,10 @@ Run the setup script (`./scripts/setup_paraview.sh`). At the end, it will run `l
   - Implement `RequestData` to execute collective round-robin data extraction across all MPI ranks using `populate_pdc_from_buffer`, restoring partitioned simulation geometry and `vtkDataAssembly` component trees natively in memory.
 - [x] **Task 29.2**: Add parallel automated verification testing (`test_reader_plugin`) to `scripts/tests/test_utilities.py` to ensure robust CI validation.
 - [x] **Task 29.3**: Document GUI & Remote Client-Server execution workflows across `AGENTS.md`, `README.md`, and `docs/utilities.md`, ensuring HPC users know to load the reader plugin under **Remote Plugins** when connecting local desktops to remote `pvserver` cluster sessions.
+
+### Phase 30: Catalyst API 2 Integration Harness [COMPLETED]
+- [x] **Task 30.1**: Write `scripts/dpvtkcatalyst.py` to parse arguments and create a `TrivialProducer` (mocking the `"input"` channel).
+- [x] **Task 30.2**: Implement dynamic importing of the user's Catalyst Python script, triggering `catalyst_initialize()`.
+- [x] **Task 30.3**: Implement the parallel time loop, reading geometry using round-robin distribution, incrementing a mocked `info` state, and invoking `catalyst_execute(info)`. Call `catalyst_finalize()` at exit.
+- [x] **Task 30.4**: Provide `example_catalyst_script.py` and a launcher shell script in `example_working_dir` to demonstrate functionality on sample datasets.
+
