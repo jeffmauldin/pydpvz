@@ -23,6 +23,7 @@ This repository includes a suite of battle-tested Python scripts located in the 
 | **`dpvtksplice.py`** | Ultra-fast binary concatenator. Splices multiple `.dpvtk` chunks into a single unified archive purely through raw byte-copying (bypassing VTK entirely). |
 | **`dpvtkdiff.py`** | Performs a metadata and compressed-byte-size rank-by-rank comparison of two `.dpvtk` archives to verify integrity. |
 | **`dpvtkmpiinfo.py`** | Environment inspector. Dynamically queries `pvbatch` and its libraries to deduce its exact **MPI flavor** and **Python ABI version** to ensure compilation compatibility. |
+| **`dpvtkcatalyst.py`** | ParaView Catalyst V2 mock driver. Feeds distributed VTK data from a `.dpvtk` archive interactively into a user-provided Catalyst Python script, mocking an in-situ simulation environment. |
 | **`dpvtk_reader_plugin.py`** | ParaView Python Reader Plugin. Seamlessly integrates with ParaView GUI's **File -> Open** dialog and pipeline executive to read parallel `.dpvtk` archives, populating interactive time sliders and reconstructing `vtkDataAssembly` trees. |
 | **`dpvtk_writer_plugin.py`** | ParaView Python Writer Plugin. Integrates with ParaView pipeline sinks and **Save Data** workflows to compress and write parallel `.dpvtk` archives without redundant data duplication. |
 
@@ -91,6 +92,13 @@ To recreate this environment on your own cluster or container, you must build `d
    source scripts/setup_env.sh
    ```
    You are now ready to run `pvbatch --sym scripts/dpvtkscreenshot.py ...`
+
+   *For headless environments without an active X11 display (like containers or CI/CD pipelines), use our off-screen software rendering setup and the `xvfb-run` dummy X server:*
+   ```bash
+   source scripts/setup_offscreen_env.sh
+   xvfb-run pvbatch --sym scripts/dpvtkscreenshot.py ...
+   # Or for interactive use: xvfb-run pvpython
+   ```
 
 5. **Using the ParaView Reader Plugin in HPC & Remote Client-Server Setups**:
    To interactively view `.dpvtk` parallel archives inside the ParaView GUI when connecting a local laptop client to a remote HPC container or cluster running `pvserver`:

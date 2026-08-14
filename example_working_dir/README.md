@@ -34,6 +34,15 @@ Demonstrates how to convert the 4-partition VTPC dataset into a `.dpvtk` archive
 ### 8. `run_convert_vtpc_1rank.sh`
 Demonstrates how to convert the 4-partition VTPC dataset into a `.dpvtk` archive using a single serial process (no MPI, just `pvbatch`). This further illustrates that one process can aggregate and write all partitions into the archive.
 
+### 9. `run_catalyst.sh`
+Demonstrates how to run the `dpvtkcatalyst.py` mock driver. It reads a `.dpvtk` archive and feeds the timesteps interactively into a user-provided Catalyst V2 script (`example_catalyst_script.py`), mocking an in-situ simulation environment.
+
+### 10. `run_catalyst_slice.sh`
+Demonstrates a more advanced Catalyst V2 script (`example_catalyst_slice_script.py`) that receives data from the mock driver, applies a ParaView `Slice` filter, and writes the sliced geometry to disk as partitioned `.vtpc` files.
+
+### 11. `run_catalyst_screenshot.sh`
+Demonstrates a Catalyst V2 script (`example_catalyst_screenshot_script.py`) that receives data from the mock driver and performs off-screen rendering. It generates `800x600` PNG screenshots of the simulation at every timestep, colored by the `EQPS` field array.
+
 ## Usage
 Run any script from this directory:
 ```bash
